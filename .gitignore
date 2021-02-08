@@ -1,0 +1,11 @@
+couchdb
+mongodb
+ML_algorithm
+raw_tracefile
+results
+*.txt
+*.json
+*.csv
+__pycache__
+.DS_Store
+
