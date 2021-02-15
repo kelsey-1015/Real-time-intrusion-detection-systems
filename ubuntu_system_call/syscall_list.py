@@ -1,10 +1,17 @@
 import csv
 from trace_file_parser import *
 import json
-
+from itertools import product
 
 input_file_csv = 'syscall_list.csv'
 input_file_txt = 'syscall_list.txt'
+
+
+def ngram_dict(syscall_list, ngram_lenghth=3):
+    ngram_list=[]
+    for i in product(syscall_list, repeat=ngram_lenghth):
+        ngram_list.append(i)
+    return ngram_list
 
 
 def read_data(csv_file):
@@ -39,9 +46,11 @@ def checking_existing_dict(syscall_list):
 
 def main():
     syscall_list = parse_file(input_file_txt)
-    feature_dict = {sys: 0 for sys in syscall_list}
-    # json.dump(feature_dict, open("FEATURE_DICT_NGRAM.json", 'w'))
+    ngram_list = ngram_dict(syscall_list)
+    # # feature_dict = {sys: 0 for sys in syscall_list}
+    # # json.dump(feature_dict, open("FEATURE_DICT_NGRAM.json", 'w'))
 
+    print(len(ngram_list))
 
 
 if __name__ == "__main__":

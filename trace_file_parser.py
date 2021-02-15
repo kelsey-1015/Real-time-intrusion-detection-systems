@@ -5,13 +5,13 @@ import json
 import ast
 from oc_svm import read_data
 import numpy as np
-
+from constants import RAWTRACE_FILE
 
 """TODO LIST
-2. make normalization consistent
-4. make csv naming strategy consistent"""
+1. Deal with global variable conflict cross python script [use a separate file to install all global variables]"""
 
 NGRAM_LENGTH = 3
+
 
 # distinct_syscall_normal_trace
 FEATURE_DICT_1 = {'futex': 0, 'epoll_ctl': 0, 'write': 0, 'accept': 0, 'epoll_wait': 0, 'timerfd_settime': 0, 'read': 0,
@@ -66,8 +66,12 @@ FEATURE_DICT_5 = {'futex': 0, 'nanosleep': 0, 'open': 0, 'fstat': 0, 'getdents':
                   'uname': 0, 'statfs': 0}
 
 
-filter_flag = True
+# The following syscalls may happen in the raw tracefile, but they are not valid. Not in the Feature vector
+# the system calls exist in the raw trace file but not in the feature dict
+INVALID_SYSCALL_LIST = ['procexit', 'signaldeliver', 'prlimit', '<unknown>', "container"]
 
+# the following syscalls exist in feature vectors, but may be filtered out for performance reasons, they are valid syscalls
+FILTER_SYSCALL_LIST = ["futex", "sched_yield"]
 
 # Python code to merge dict using update() method
 def merge(dict1, dict2):
@@ -131,7 +135,8 @@ def n_gram_dict(filename, distinct_ngram_list=[]):
                     sys_call = line_list[6]
                 except:
                     raise ValueError
-                if sys_call == 'container':
+
+                if sys_call in INVALID_SYSCALL_LIST: # skip the line IF the corresponding syscall is invalid
                     continue
 
                 n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
@@ -144,20 +149,20 @@ def n_gram_dict(filename, distinct_ngram_list=[]):
     values = [0] * len(keys)
     distinct_ngram_dict = dict(zip(keys, values))
 
-    return distinct_ngram_dict
+    return distinct_ngram_list, distinct_ngram_dict
 
 
-def remove_ngram_fv(input_dict, remove_list=["futex", "sched_yield", "container"]):
-    """ Remove keys contains elements in the remove list"""
-    output_dict = {}
-    for k in input_dict.keys():
-        k = strlist_2_list(k)
-        print(len(k))
-        if len(k) != NGRAM_LENGTH:
-            continue
-        if not common_element(k, remove_list):
-            output_dict[str(k)] = 0
-    return output_dict
+# def remove_ngram_fv(input_dict, remove_list=["futex", "sched_yield", "container"]):
+#     """ Remove keys contains elements in the remove list"""
+#     output_dict = {}
+#     for k in input_dict.keys():
+#         k = strlist_2_list(k)
+#         print(len(k))
+#         if len(k) != NGRAM_LENGTH:
+#             continue
+#         if not common_element(k, remove_list):
+#             output_dict[str(k)] = 0
+#     return output_dict
 
 
 def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
@@ -182,7 +187,7 @@ def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
     return feature_dict
 
 
-def parse_trace_ngram(filename, feature_dict, num_separate=10000):
+def parse_trace_ngram(filename, feature_dict, num_separate=10000, filter_flag=True):
     """This function changes traces into fix length n-gram feature vectors
     INPUT: filename --> raw tracefiles
     feature_dict: The fixed length feature vector"""
@@ -206,20 +211,19 @@ def parse_trace_ngram(filename, feature_dict, num_separate=10000):
                     raise ValueError
 
                 if filter_flag:
-                    # if the action not belongs to one of the followings
-                    if sys_call not in ["futex", "sched_yield", "container"]:
-                    # if sys_call not in ["container"]:
+                    if sys_call not in FILTER_SYSCALL_LIST: # if the action not belongs to one of the followings
                         n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
                         if len(n_gram) == NGRAM_LENGTH:
                             n_gram_s = str(n_gram)
                             try:
                                 feature_dict[n_gram_s] += 1
-                            except KeyError:
-                                print(key)
+                            except KeyError: # raise key error if the ngram does not exist
+                                # if sys_call not in INVALID_SYSCALL_LIST:
+                                    # print("Unexpected system call: ", n_gram_s)
                                 pass
 
                 if syscall_index == num_separate:
-                    print('seprate the tracefile')
+                    # print('seprate the tracefile')
                     syscall_index = 0
                     feature_vector = list(feature_dict.values())
                     #  skip if all the elements all zero
@@ -234,7 +238,7 @@ def parse_trace_ngram(filename, feature_dict, num_separate=10000):
     return feature_vector_list
 
 
-def parse_trace_tmp(filename, feature_dict, num_separate=10000, frequency_flag=True):
+def parse_trace_tmp(filename, feature_dict, num_separate=10000, filter_flag=True):
     """This function changes traces into feature vectors. The raw trace is separated with equal length num_separate
     OUTPUT: occurrence_dict: The no. of occurrences of features [syscall, ngram] in all traces of the database"""
 
@@ -262,11 +266,12 @@ def parse_trace_tmp(filename, feature_dict, num_separate=10000, frequency_flag=T
 
                 if filter_flag:
                     # if the action not belongs to one of the followings
-                    if sys_call not in ["futex", "sched_yield", "container"]:
+                    if sys_call not in FILTER_SYSCALL_LIST:
                         try:
                             feature_dict[sys_call] += 1
                         except:
-                            print(sys_call)
+                            if sys_call not in INVALID_SYSCALL_LIST:
+                                print("Unexpected system call: ", sys_call)
                             pass
 
                 if syscall_index == num_separate:
@@ -343,12 +348,12 @@ def generate_csv_file(rawtrace_file, feature_dict_file, csv_filename, Flag, Read
     if Flag == 2:
         if Read_ngram_dict:
             # Read data from file:
-            feature_dict = json.load(open("MONGO_FEATURE_DICT_NGRAM.json"))
+            feature_dict = json.load(open(NGRAM_FEATURE_DICT))
 
-        else: # no FEATURE_DICT FOR N-GRAM EXISTS
-            feature_dict = n_gram_dict(rawtrace_file)
-            # Serialize data into file:
-            json.dump(feature_dict, open("MONGO_FEATURE_DICT_NGRAM.json", 'w'))
+        # else: # no FEATURE_DICT FOR N-GRAM EXISTS
+        #     feature_dict = n_gram_dict(rawtrace_file)
+        #     # Serialize data into file:
+        #     json.dump(feature_dict, open("MONGO_FEATURE_DICT_NGRAM.json", 'w'))
 
         feature_vector_list = parse_trace_ngram(rawtrace_file, feature_dict)
         feature_vector_csv_generator(feature_vector_list, csv_filename)
@@ -369,15 +374,19 @@ def generate_csv_file_loop(rawtrace_file_list, feature_dict_file='FEATURE_DICT.j
 
 
 def main():
-    # rawtrace_file = 'ML_algorithm/co7_ubuntu/co7_ubuntu_db0_0'
-    # generate_csv_file(rawtrace_file, 'FEATURE_DICT.json', 'mongodb/mb_normal', 1)
-    rawtrace_file_list = [('ML_algorithm/co1_ubuntu_db0/tracefile-0', 'ML_algorithm/ml_1_normal'),
-                          ('ML_algorithm/co2_ubuntu_db0/tracefile-0', 'ML_algorithm/ml_2_normal'),
-                          ('ML_algorithm/co3_ubuntu_db0/tracefile-0', 'ML_algorithm/ml_3_normal'),
-                          ('ML_algorithm/co4_ubuntu_db0/tracefile-0', 'ML_algorithm/ml_4_normal'),
-                          ('ML_algorithm/co7_ubuntu_db0/tracefile-0', 'ML_algorithm/ml_7_normal'),
-                          ]
-    # generate_csv_file_loop(rawtrace_file_list)
+    """TODO: combine the following code into n_gram_dict function"""
+    rawtrace_file_normal = RAWTRACE_FILE['mongodb_normal']
+    rawtrace_file_attack = RAWTRACE_FILE['mongodb_attack'][1]
+
+    distinct_ngram_list = []
+    for filename in [rawtrace_file_normal, rawtrace_file_attack]:
+        ngram_list, ngram_dict = n_gram_dict(filename, distinct_ngram_list)
+        distinct_ngram_list = ngram_list
+    print(len(list(ngram_dict.keys())))
+    json.dump(ngram_dict, open("MONGO_FEATURE_DICT_NGRAM_2.json", 'w'))
+
+
+
 
 if __name__ == "__main__":
     main()
