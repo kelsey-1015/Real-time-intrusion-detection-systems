@@ -1,16 +1,12 @@
+
 from sklearn.svm import OneClassSVM
-from sklearn import metrics
-import random
+from sklearn.metrics import roc_curve, auc
 import csv
 import numpy as np
 from sklearn.model_selection import KFold
-import sys
-
-"""TODO:
-1. refine cross-validation code
-2. automatic select nu with a given criteria"""
-
-
+import plot
+from sklearn.decomposition import PCA
+from sklearn.decomposition import TruncatedSVD
 
 dataset_file_normal = 'couchdb/normal_v1_6_idf.csv'
 dataset_file_attack = 'couchdb/attack_v1_6_idf.csv'
@@ -26,27 +22,48 @@ dataset_file_list_ml_tf = ['ML_algorithm/ml_1_normal_tf.csv', 'ML_algorithm/ml_2
                            "ML_algorithm/ml_7_normal_tf.csv"]
 
 
- # nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
-nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1]
+# nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
+# nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1]
 # FOR TEST
-# nu_list =[0.001]
-
+nu_list = [0.01]
 gamma_list = ['auto', 'scale']
-LEN_FEATURE_VECTOR = 407
 
 
-def dataset_concatenate(dataset_file_list, col_num=LEN_FEATURE_VECTOR):
-    """This function combines data from multiple lists into an np array, col_num equals to the number of keys in
-    the dist"""
-    if isinstance(dataset_file_list, str): # if the input list is a string, then output directly
-        dataset = read_data(dataset_file_list)
-        return dataset
+def oc_svm_threshold_test(training_set, testing_set_normal, testing_set_attack, threshold, kernel, nu_para, gamma_para='scale'):
+    """This function train a classifier and compute the results with a given threshold, this function is used to
+    compute the roc curve if we want using k-fold. ps: the thresholds should be set as distinct values of the scores.
+    """
+    clf = OneClassSVM(nu=nu_para, kernel=kernel, gamma=gamma_para)
+    clf.fit(training_set)
 
-    fv_list_total = np.empty((0, col_num))
-    for dataset_file in dataset_file_list:
-        dataset = read_data(dataset_file)
-        fv_list_total = np.concatenate((fv_list_total, dataset))
-    return fv_list_total
+    test_set = np.concatenate((testing_set_normal, testing_set_attack))
+    score = clf.decision_function(test_set)
+    y_true = np.array([1] * len(testing_set_normal) + [-1] * len(testing_set_attack))
+    fpr, tpr, thresholds = roc_curve(y_true, score)
+    # print(fpr, tpr, threshold)
+    print(thresholds)
+    plot.roc_curve(fpr, tpr)
+
+
+def oc_svm_threshold(training_set, testing_set_normal, testing_set_attack, threshold, kernel, nu_para, gamma_para='scale'):
+    """This function train a classifier and compute the results with a given threshold
+    """
+    clf = OneClassSVM(nu=nu_para, kernel=kernel, gamma=gamma_para)
+    clf.fit(training_set)
+
+    score_normal = clf.decision_function(testing_set_normal)
+    # print(score_normal)
+    predict_normal = [1 if v > threshold else -1 for v in score_normal]
+    predict_normal =np.array(predict_normal)
+    n_error_test_normal = predict_normal[predict_normal == -1].size
+    FP_rate = n_error_test_normal / len(testing_set_normal)
+
+    score_attack =clf.decision_function(testing_set_attack)
+    predict_attack = [1 if v > threshold else -1 for v in score_attack]
+    predict_attack = np.array(predict_attack)
+    n_error_test_attack = predict_attack[predict_attack == -1].size
+    TP_rate = n_error_test_attack / len(testing_set_attack)
+    return FP_rate, TP_rate
 
 
 
@@ -66,14 +83,15 @@ def weighted_by_frequency(feature_vector_list):
 def read_data(csv_file):
     """Read the CSV file and generate datasets as neseted np array"""
     with open(csv_file, 'r') as f:
-        reader = csv.reader(f)
+        reader = csv.reader(f, quoting=csv.QUOTE_NONNUMERIC)
         dataset_list = list(reader)
     dataset_list = np.array(dataset_list)
     return dataset_list
 
 
 def oc_svm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.001, gamma_para='scale'):
-    """ INPUT: training_set, testing_set_normal, testing_set_attack are nested list of feature vectors"""
+    """ This function train an oc-svm classifier and compute FPR and TPR with default threshold
+    INPUT: training_set, testing_set_normal, testing_set_attack are nested list of feature vectors"""
     clf = OneClassSVM(nu=nu_para, kernel=kernel, gamma=gamma_para)
     clf.fit(training_set)
 
@@ -96,14 +114,47 @@ def oc_svm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para
     return FP_rate, TP_rate
 
 
-def K_fold(dataset_list_normal, dataset_list_attack, kernel, nu, K=10):
+def pca_ocsvm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.01, dimension=407, gamma_para='scale'):
+    """Fit the PCA with training data, using the resulting vectors to testing data"""
+    # print(training_set.shape)
+    pca = PCA(n_components=dimension)
+    pca.fit(training_set)
+    training_set_pca = pca.transform(training_set)
+    testing_set_normal_pca = pca.transform(testing_set_normal)
+    testing_set_attack_pca = pca.transform(testing_set_attack)
+    # print(training_set_pca.shape, testing_set_normal_pca.shape, testing_set_attack_pca.shape)
+    # print(testing_set_attack, testing_set_attack_pca)
+    FPR, TPR = oc_svm(training_set_pca, testing_set_normal_pca, testing_set_attack_pca, kernel, nu_para, gamma_para)
+    print(FPR, TPR)
+
+
+def truckedsvd_ocsvm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.01, dimension=20, gamma_para='scale'):
+    """Fit the PCA with training data, using the resulting vectors to testing data"""
+    svd = TruncatedSVD(n_components=dimension)
+    svd.fit(training_set)
+    training_set_pca = svd.transform(training_set)
+    testing_set_normal_svd = svd.transform(testing_set_normal)
+    testing_set_attack_svd = svd.transform(testing_set_attack)
+    FPR, TPR = oc_svm(training_set_pca, testing_set_normal_svd, testing_set_attack_svd, kernel, nu_para, gamma_para)
+    return FPR, TPR
+
+
+
+
+def K_fold(dataset_list_normal, dataset_list_attack, kernel, nu, dr_flag, dr_dimension, K=10):
     """ This function train and test an oc-svm model with K-fold cross validation"""
-    kf = KFold(n_splits=K)
+    if len(dataset_list_normal) != 0:
+        kf = KFold(n_splits=K)
+    else:
+        raise ValueError("The input training data is empty!")
     FPR_list = []
     TPR_list = []
     for train_index, test_index in kf.split(dataset_list_normal):
         train_set, test_set_normal = dataset_list_normal[train_index], dataset_list_normal[test_index]
-        FPR, TPR = oc_svm(train_set, test_set_normal, dataset_list_attack, kernel, nu)
+        if dr_flag:
+            FPR, TPR = truckedsvd_ocsvm(train_set, test_set_normal, dataset_list_attack, kernel, nu, dr_dimension)
+        else:
+            FPR, TPR = oc_svm(train_set, test_set_normal, dataset_list_attack, kernel, nu)
         FPR_list.append(FPR)
         TPR_list.append(TPR)
 
@@ -119,12 +170,12 @@ def K_fold(dataset_list_normal, dataset_list_attack, kernel, nu, K=10):
     return average_FPR, average_TPR, std_FPR, std_TPR
 
 
-def parameter_search(data_list_normal, data_list_attack, kernel, nu_list):
+def parameter_search(data_list_normal, data_list_attack, kernel, nu_list, dr_flag, dr_dimension):
     """ The function fit the oc-svm model with different parameter nu and outputs the corresponding
     FPR, TPR"""
     nu_performance_dict = {}
     for nu in nu_list:
-        FPR, TPR, std_FPR, std_TPR = K_fold(data_list_normal, data_list_attack, kernel, nu)
+        FPR, TPR, std_FPR, std_TPR = K_fold(data_list_normal, data_list_attack, kernel, nu, dr_flag, dr_dimension)
 
         print(nu, FPR, TPR, std_FPR, std_TPR)
         nu_performance_dict[nu] = (FPR, TPR, std_FPR, std_TPR)
@@ -148,28 +199,12 @@ def parameter_search_loop(dataset_list):
         parameter_search(dataset_normal, dataset_attack, nu_list)
 
 
+
 def main():
-    kernel = 'rbf'
-
-    """Cross validation ML algorithms (multiple for training, one for testing)"""
-    # training_set_file_list = dataset_file_list_ml_tf[:-1]
-    # testing_set_file_list = dataset_file_list_ml_tf[-1]
-
-    """couchdb vs mongodb"""
-    training_set_file_list = 'couchdb/cb_normal_tf.csv'
-    testing_set_file_list = 'couchdb/cb_attack_tf.csv'
-    # testing_set_file_list = 'mongodb/mb_normal_tf.csv'
-
-    training_set = read_data(training_set_file_list)
-    testing_set = read_data(testing_set_file_list)
-    nu_performance_dict = parameter_search(training_set, testing_set, kernel, nu_list)
-
-
-    # multiple_to_one_cross_validation()
-    # one_to_one_cross_validation()
-
-    # print(test.shape)
-
+    dataset_file_normal = 'couchdb/cb_normal_tf.csv'
+    dataset_file_attack = 'couchdb/cb_attack_tf.csv'
+    dataset_normal = read_data(dataset_file_normal)
+    dataset_attack = read_data(dataset_file_attack)
 
 
 

@@ -3,67 +3,11 @@ import csv
 import math
 import json
 import ast
-from oc_svm import read_data
-import numpy as np
 from constants import RAWTRACE_FILE
+from sklearn.decomposition import PCA
 
-"""TODO LIST
-1. Deal with global variable conflict cross python script [use a separate file to install all global variables]"""
 
 NGRAM_LENGTH = 3
-
-
-# distinct_syscall_normal_trace
-FEATURE_DICT_1 = {'futex': 0, 'epoll_ctl': 0, 'write': 0, 'accept': 0, 'epoll_wait': 0, 'timerfd_settime': 0, 'read': 0,
-                'sched_yield': 0, 'rt_sigtimedwait': 0, 'wait4': 0, 'select': 0, 'mmap': 0, 'munmap': 0, 'writev': 0,
-                'recvfrom': 0, 'close': 0, 'fcntl': 0, 'getsockopt': 0, 'setsockopt': 0, 'getpeername': 0, 'getpid': 0,
-                'stat': 0, 'access': 0, 'open': 0, 'fstat': 0, 'lseek': 0, 'pread': 0, 'fsync': 0, 'rename': 0,
-                'socket': 0, 'connect': 0, 'poll': 0, 'sendto': 0, 'ioctl': 0, 'bind': 0, 'getsockname': 0, 'times': 0,
-                'sysinfo': 0}
-
-# dictinct_syscall_normal_trace_attack1
-FEATURE_DICT_2 = {'futex': 0, 'epoll_ctl': 0, 'write': 0, 'accept': 0, 'epoll_wait': 0, 'timerfd_settime': 0, 'read': 0,
-                  'sched_yield': 0, 'rt_sigtimedwait': 0, 'wait4': 0, 'select': 0, 'mmap': 0, 'munmap': 0, 'writev': 0,
-                  'recvfrom': 0, 'close': 0, 'fcntl': 0, 'getsockopt': 0, 'setsockopt': 0, 'getpeername': 0,
-                  'getpid': 0, 'stat': 0, 'access': 0, 'open': 0, 'fstat': 0, 'lseek': 0, 'pread': 0, 'fsync': 0,
-                  'rename': 0, 'socket': 0, 'connect': 0, 'poll': 0, 'sendto': 0, 'ioctl': 0, 'bind': 0, 'getsockname': 0,
-                  'times': 0, 'sysinfo': 0, 'setsid': 0, 'rt_sigprocmask': 0, 'execve': 0, 'brk': 0, 'mprotect': 0,
-                  'arch_prctl': 0, 'rt_sigaction': 0, 'geteuid': 0, 'getppid': 0, 'dup': 0, 'clone': 0, 'kill': 0,
-                  'exit_group': 0, 'procexit': 0, 'signaldeliver': 0, 'sigreturn': 0, 'umask': 0, 'lstat': 0, 'newfstatat': 0,
-                  'unlinkat': 0, 'pipe': 0, 'vfork': 0}
-
-# dictinct_syscall_normal_trace_attack1_v_6
-FEATURE_DICT_3 = {'futex': 0, 'epoll_ctl': 0, 'write': 0, 'accept': 0, 'epoll_wait': 0, 'timerfd_settime': 0, 'read': 0,
-                  'sched_yield': 0, 'rt_sigtimedwait': 0, 'wait4': 0, 'select': 0, 'mmap': 0, 'munmap': 0, 'writev': 0,
-                  'recvfrom': 0, 'close': 0, 'fcntl': 0, 'getsockopt': 0, 'setsockopt': 0, 'getpeername': 0, 'getpid': 0,
-                  'stat': 0, 'access': 0, 'open': 0, 'fstat': 0, 'lseek': 0, 'pread': 0, 'fsync': 0, 'rename': 0, 'socket': 0,
-                  'connect': 0, 'poll': 0, 'sendto': 0, 'ioctl': 0, 'bind': 0, 'getsockname': 0, 'times': 0, 'sysinfo': 0,
-                  'setsid': 0, 'rt_sigprocmask': 0, 'execve': 0, 'brk': 0, 'mprotect': 0, 'arch_prctl': 0, 'rt_sigaction': 0,
-                  'geteuid': 0, 'getppid': 0, 'dup': 0, 'clone': 0, 'kill': 0, 'exit_group': 0, 'procexit': 0, 'signaldeliver': 0,
-                  'sigreturn': 0, 'umask': 0, 'lstat': 0, 'newfstatat': 0, 'unlinkat': 0, 'pipe': 0, 'vfork': 0, 'openat': 0,
-                  'getdents': 0, 'uname': 0, 'statfs': 0}
-
-# dictinct_syscall_normal_mongodb
-FEATURE_DICT_4 = {'futex': 0, 'nanosleep': 0, 'open': 0, 'fstat': 0, 'getdents': 0, 'close': 0, 'getrusage': 0, 'read': 0,
-                  'epoll_wait': 0, 'accept': 0, 'epoll_ctl': 0, 'ioctl': 0, 'getsockname': 0, 'setsockopt': 0, 'getsockopt': 0,
-                  'getpeername': 0, 'write': 0, 'gettid': 0, 'prctl': 0, 'getrlimit': 0, 'clone': 0, 'set_robust_list': 0,
-                  'recvmsg': 0, 'sendmsg': 0, 'writev': 0, 'lstat': 0, 'unlink': 0, 'stat': 0, 'pread': 0, 'fdatasync': 0,
-                  'pwrite': 0, 'sched_yield': 0, 'rename': 0, 'mmap': 0, 'mprotect': 0, 'brk': 0, 'ftruncate': 0, 'select': 0,
-                  'madvise': 0, 'fallocate': 0, 'shutdown': 0, 'exit': 0, 'procexit': 0}
-
-
-# mongo+couchdb/normal
-FEATURE_DICT_5 = {'futex': 0, 'nanosleep': 0, 'open': 0, 'fstat': 0, 'getdents': 0, 'close': 0, 'getrusage': 0, 'read': 0,
-                  'epoll_wait': 0, 'accept': 0, 'epoll_ctl': 0, 'ioctl': 0, 'getsockname': 0, 'setsockopt': 0, 'getsockopt': 0,
-                  'getpeername': 0, 'write': 0, 'gettid': 0, 'prctl': 0, 'getrlimit': 0, 'clone': 0, 'set_robust_list': 0,
-                  'recvmsg': 0, 'sendmsg': 0, 'writev': 0, 'lstat': 0, 'unlink': 0, 'stat': 0, 'pread': 0, 'fdatasync': 0,
-                  'pwrite': 0, 'sched_yield': 0, 'rename': 0, 'mmap': 0, 'mprotect': 0, 'brk': 0, 'ftruncate': 0, 'select': 0,
-                  'madvise': 0, 'fallocate': 0, 'shutdown': 0, 'exit': 0, 'procexit': 0, 'timerfd_settime': 0, 'rt_sigtimedwait': 0,
-                  'wait4': 0, 'munmap': 0, 'recvfrom': 0, 'fcntl': 0, 'getpid': 0, 'access': 0, 'lseek': 0, 'fsync': 0, 'socket': 0,
-                  'connect': 0, 'poll': 0, 'sendto': 0, 'bind': 0, 'times': 0, 'sysinfo': 0, 'setsid': 0, 'rt_sigprocmask': 0,
-                  'execve': 0, 'arch_prctl': 0, 'rt_sigaction': 0, 'geteuid': 0, 'getppid': 0, 'dup': 0, 'kill': 0, 'exit_group': 0,
-                  'signaldeliver': 0, 'sigreturn': 0, 'umask': 0, 'newfstatat': 0, 'unlinkat': 0, 'pipe': 0, 'vfork': 0, 'openat': 0,
-                  'uname': 0, 'statfs': 0}
 
 
 # The following syscalls may happen in the raw tracefile, but they are not valid. Not in the Feature vector
@@ -72,6 +16,7 @@ INVALID_SYSCALL_LIST = ['procexit', 'signaldeliver', 'prlimit', '<unknown>', "co
 
 # the following syscalls exist in feature vectors, but may be filtered out for performance reasons, they are valid syscalls
 FILTER_SYSCALL_LIST = ["futex", "sched_yield"]
+
 
 # Python code to merge dict using update() method
 def merge(dict1, dict2):
@@ -152,19 +97,6 @@ def n_gram_dict(filename, distinct_ngram_list=[]):
     return distinct_ngram_list, distinct_ngram_dict
 
 
-# def remove_ngram_fv(input_dict, remove_list=["futex", "sched_yield", "container"]):
-#     """ Remove keys contains elements in the remove list"""
-#     output_dict = {}
-#     for k in input_dict.keys():
-#         k = strlist_2_list(k)
-#         print(len(k))
-#         if len(k) != NGRAM_LENGTH:
-#             continue
-#         if not common_element(k, remove_list):
-#             output_dict[str(k)] = 0
-#     return output_dict
-
-
 def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
     """ This function extracts or update occurring distinct syscalls in the raw tracefile
     INPUT: filename --> new input
@@ -187,7 +119,7 @@ def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
     return feature_dict
 
 
-def parse_trace_ngram(filename, feature_dict, num_separate=10000, filter_flag=True):
+def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag):
     """This function changes traces into fix length n-gram feature vectors
     INPUT: filename --> raw tracefiles
     feature_dict: The fixed length feature vector"""
@@ -217,10 +149,17 @@ def parse_trace_ngram(filename, feature_dict, num_separate=10000, filter_flag=Tr
                             n_gram_s = str(n_gram)
                             try:
                                 feature_dict[n_gram_s] += 1
-                            except KeyError: # raise key error if the ngram does not exist
-                                # if sys_call not in INVALID_SYSCALL_LIST:
-                                    # print("Unexpected system call: ", n_gram_s)
+                            except KeyError:  # raise key error if the ngram does not exist
                                 pass
+                else:
+                    n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
+
+                    if len(n_gram) == NGRAM_LENGTH:
+                        n_gram_s = str(n_gram)
+                        try:
+                            feature_dict[n_gram_s] += 1
+                        except KeyError: # raise key error if the ngram does not exist
+                            pass
 
                 if syscall_index == num_separate:
                     # print('seprate the tracefile')
@@ -238,7 +177,7 @@ def parse_trace_ngram(filename, feature_dict, num_separate=10000, filter_flag=Tr
     return feature_vector_list
 
 
-def parse_trace_tmp(filename, feature_dict, num_separate=10000, filter_flag=True):
+def parse_trace_tmp(filename, feature_dict, num_separate, filter_flag):
     """This function changes traces into feature vectors. The raw trace is separated with equal length num_separate
     OUTPUT: occurrence_dict: The no. of occurrences of features [syscall, ngram] in all traces of the database"""
 
@@ -270,9 +209,14 @@ def parse_trace_tmp(filename, feature_dict, num_separate=10000, filter_flag=True
                         try:
                             feature_dict[sys_call] += 1
                         except:
-                            if sys_call not in INVALID_SYSCALL_LIST:
-                                print("Unexpected system call: ", sys_call)
+                            # if sys_call not in INVALID_SYSCALL_LIST:
+                            #     print("Unexpected system call: ", sys_call)
                             pass
+                else:
+                    try:
+                        feature_dict[sys_call] += 1
+                    except:
+                        pass
 
                 if syscall_index == num_separate:
                     # print('seprate the tracefile')
@@ -327,63 +271,17 @@ def feature_vector_csv_generator(feature_vector_list, csv_filename):
             writer.writerows(feature_vector_list)
 
 
-def generate_csv_file(rawtrace_file, feature_dict_file, csv_filename, Flag, Read_ngram_dict=True):
-    """ parse raw trace and generate csv file serving as input of classifiers. Flag = 0 for tf, 1 for idf-tf,
-    2 for n-gram"""
-
-    feature_dict = json.load(open(feature_dict_file))
-
-    if Flag == 0:
-        feature_vector_list, occurrence_dict, N = parse_trace_tmp(rawtrace_file, feature_dict)
-        print(feature_vector_list)
-        feature_vector_list = normalization(feature_vector_list)
-        feature_vector_csv_generator(feature_vector_list, csv_filename)
-
-    if Flag == 1:
-        feature_vector_list, occurrence_dict, N = parse_trace_tmp(rawtrace_file, feature_dict)
-        feature_vector_list = normalization(feature_vector_list)
-        fv_idf_list = df_idf(feature_vector_list, occurrence_dict, N)
-        feature_vector_csv_generator(fv_idf_list, csv_filename)
-
-    if Flag == 2:
-        if Read_ngram_dict:
-            # Read data from file:
-            feature_dict = json.load(open(NGRAM_FEATURE_DICT))
-
-        # else: # no FEATURE_DICT FOR N-GRAM EXISTS
-        #     feature_dict = n_gram_dict(rawtrace_file)
-        #     # Serialize data into file:
-        #     json.dump(feature_dict, open("MONGO_FEATURE_DICT_NGRAM.json", 'w'))
-
-        feature_vector_list = parse_trace_ngram(rawtrace_file, feature_dict)
-        feature_vector_csv_generator(feature_vector_list, csv_filename)
-
-
-def generate_csv_file_loop(rawtrace_file_list, feature_dict_file='FEATURE_DICT.json'):
-    for rawtrace in rawtrace_file_list:
-        rawtrace_file = rawtrace[0]
-        csv_filename = rawtrace[1]
-        flag_list = [0, 1]
-        for flag in flag_list:
-            if flag == 0:
-                csv_filename_full = csv_filename + "_tf.csv"
-            elif flag == 1:
-                csv_filename_full = csv_filename + "_tfidf.csv"
-            print(csv_filename_full)
-            generate_csv_file(rawtrace_file, feature_dict_file, csv_filename_full, flag)
-
-
 def main():
-    """TODO: combine the following code into n_gram_dict function"""
     rawtrace_file_normal = RAWTRACE_FILE['mongodb_normal']
-    rawtrace_file_attack = RAWTRACE_FILE['mongodb_attack'][1]
+    rawtrace_file_attack_0 = RAWTRACE_FILE['mongodb_attack'][0]
+    rawtrace_file_attack_1 = RAWTRACE_FILE['mongodb_attack'][1]
 
     distinct_ngram_list = []
-    for filename in [rawtrace_file_normal, rawtrace_file_attack]:
+    for filename in [rawtrace_file_attack_0, rawtrace_file_attack_1, rawtrace_file_normal]:
         ngram_list, ngram_dict = n_gram_dict(filename, distinct_ngram_list)
         distinct_ngram_list = ngram_list
     print(len(list(ngram_dict.keys())))
-    json.dump(ngram_dict, open("MONGO_FEATURE_DICT_NGRAM_2.json", 'w'))
+    json.dump(ngram_dict, open("MONGODB_FEATURE_DICT_NGRAM.json", 'w'))
 
 
 
