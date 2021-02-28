@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b9d56281-ac10-44c2-b827-6979e4c40fe0" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/data_formation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_formation.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_formation.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oc_svm.py" beforeDir="false" afterPath="$PROJECT_DIR$/oc_svm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trace_file_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/trace_file_parser.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_model.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -19,13 +17,13 @@
     <session id="2096565309">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="31" />
-          <entry key="project.open.time.0" value="5" />
+          <entry key="project.closed" value="33" />
+          <entry key="project.open.time.0" value="6" />
           <entry key="project.open.time.2" value="2" />
           <entry key="project.open.time.3" value="21" />
           <entry key="project.open.time.4" value="3" />
           <entry key="project.open.time.8" value="1" />
-          <entry key="project.opened" value="32" />
+          <entry key="project.opened" value="33" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -38,11 +36,11 @@
           <entry key="couchdb_v2_3_normal" value="1" />
           <entry key="csv" value="58" />
           <entry key="filename" value="1" />
-          <entry key="json" value="18" />
+          <entry key="json" value="21" />
           <entry key="mongo_rawtrace_normal" value="1" />
           <entry key="normal_v1_6_ngram_norm" value="1" />
           <entry key="oc_svm_gaussian_kernel_cb" value="2" />
-          <entry key="py" value="49" />
+          <entry key="py" value="51" />
           <entry key="tracefile-0" value="1" />
           <entry key="txt" value="150" />
         </counts>
@@ -50,22 +48,22 @@
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="CSV" value="58" />
-          <entry key="JSON" value="18" />
+          <entry key="JSON" value="21" />
           <entry key="PLAIN_TEXT" value="162" />
-          <entry key="Python" value="49" />
+          <entry key="Python" value="51" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="11" />
-          <entry key="py" value="38900" />
+          <entry key="py" value="39916" />
           <entry key="txt" value="177" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="188" />
-          <entry key="Python" value="38900" />
+          <entry key="Python" value="39916" />
         </counts>
       </usages-collector>
     </session>
@@ -75,13 +73,27 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_model.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="586">
-              <caret line="260" column="26" selection-start-line="260" selection-start-column="26" selection-end-line="260" selection-end-column="26" />
+            <state relative-caret-position="89">
+              <caret line="285" column="80" selection-start-line="285" selection-start-column="80" selection-end-line="285" selection-end-column="80" />
               <folding>
                 <element signature="e#79#109#0" expanded="true" />
-                <marker date="1614523207241" expanded="true" signature="7515:8269" ph="..." />
-                <marker date="1614523207241" expanded="true" signature="11735:11741" ph="..." />
-                <marker date="1614523207241" expanded="true" signature="11736:11737" ph="..." />
+                <marker date="1614529739847" expanded="true" signature="7759:8513" ph="..." />
+                <marker date="1614529739847" expanded="true" signature="13479:13485" ph="..." />
+                <marker date="1614529739847" expanded="true" signature="13480:13481" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/data_formation.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-58">
+              <caret line="73" column="12" lean-forward="true" selection-start-line="73" selection-start-column="14" selection-end-line="73" selection-end-column="34" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
+                <marker date="1614528989641" expanded="true" signature="2988:3355" ph="..." />
+                <marker date="1614528989641" expanded="true" signature="3354:3355" ph="..." />
               </folding>
             </state>
           </provider>
@@ -90,7 +102,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/plot.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="94">
+            <state relative-caret-position="251">
               <caret line="17" column="39" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="48" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -100,28 +112,19 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/oc_svm.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2561">
-              <caret line="29" selection-start-line="29" selection-end-line="29" />
+            <state relative-caret-position="-139">
+              <caret line="178" column="62" selection-start-line="178" selection-start-column="62" selection-end-line="178" selection-end-column="62" />
               <folding>
                 <element signature="e#1#36#0" expanded="true" />
-                <marker date="1614088240794" expanded="true" signature="2914:2916" ph="..." />
-                <marker date="1614088240794" expanded="true" signature="3344:3347" ph="..." />
-                <marker date="1614088240794" expanded="true" signature="3346:3347" ph="..." />
-                <marker date="1614088240794" expanded="true" signature="3371:3376" ph="..." />
-                <marker date="1614088240794" expanded="true" signature="3750:3755" ph="..." />
+                <marker date="1614525958697" expanded="true" signature="2914:2916" ph="..." />
+                <marker date="1614525958697" expanded="true" signature="3344:3347" ph="..." />
+                <marker date="1614525958697" expanded="true" signature="3346:3347" ph="..." />
+                <marker date="1614525958697" expanded="true" signature="3371:3376" ph="..." />
+                <marker date="1614525958697" expanded="true" signature="3750:3755" ph="..." />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/trace_file_parser.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2113">
-              <caret line="121" column="71" selection-start-line="121" selection-start-column="71" selection-end-line="121" selection-end-column="71" />
             </state>
           </provider>
         </entry>
@@ -184,9 +187,9 @@
         <option value="$PROJECT_DIR$/trace_file_parser.py" />
         <option value="$PROJECT_DIR$/plot.py" />
         <option value="$PROJECT_DIR$/couchdb_ocsvm_linear_TFIDF_svd.txt" />
-        <option value="$PROJECT_DIR$/data_formation.py" />
-        <option value="$PROJECT_DIR$/oc_svm.py" />
         <option value="$PROJECT_DIR$/data_formation_md.py" />
+        <option value="$PROJECT_DIR$/oc_svm.py" />
+        <option value="$PROJECT_DIR$/data_formation.py" />
         <option value="$PROJECT_DIR$/train_model.py" />
       </list>
     </option>
@@ -203,6 +206,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -214,7 +218,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -362,8 +365,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.train_model" />
-        <item itemvalue="Python.data_formation_md" />
         <item itemvalue="Python.data_formation" />
+        <item itemvalue="Python.data_formation_md" />
         <item itemvalue="Python.plot" />
         <item itemvalue="Python.test_arg" />
       </list>
@@ -391,7 +394,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.4257603" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.4257603" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -439,8 +442,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/results/N21_ml_ocsvm_rbf_TFIDF.txt" />
-    <entry file="file://$PROJECT_DIR$/results/N21_ml_ocsvm_linear_TF.txt" />
     <entry file="file://$PROJECT_DIR$/results/1to1_ml_ocsvm_rbf_TF.txt" />
     <entry file="file://$PROJECT_DIR$/results/oc-svm/mongodb_ocsvm_linear_TFIDF.txt">
       <provider selected="true" editor-type-id="text-editor">
@@ -561,13 +562,7 @@
       <provider selected="true" editor-type-id="LargeFileEditor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_linear_TF.txt" />
-    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_rbf_TFIDF_svd.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="5" lean-forward="true" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_rbf_TFIDF_svd.txt" />
     <entry file="file://$PROJECT_DIR$/data_formation_md.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="810">
@@ -575,20 +570,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data_formation.py">
+    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_linear_TFIDF.txt" />
+    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_linear_TFIDF_svd.txt" />
+    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_rbf_TFIDF.txt" />
+    <entry file="file://$PROJECT_DIR$/trace_file_parser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="641">
-          <caret line="47" column="12" selection-start-line="47" selection-start-column="12" selection-end-line="47" selection-end-column="12" />
+        <state relative-caret-position="-2202">
+          <caret line="121" column="71" selection-start-line="121" selection-start-column="71" selection-end-line="121" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/oc_svm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-139">
+          <caret line="178" column="62" selection-start-line="178" selection-start-column="62" selection-end-line="178" selection-end-column="62" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
-            <marker date="1614083775309" expanded="true" signature="2794:2795" ph="..." />
+            <element signature="e#1#36#0" expanded="true" />
+            <marker date="1614525958697" expanded="true" signature="2914:2916" ph="..." />
+            <marker date="1614525958697" expanded="true" signature="3344:3347" ph="..." />
+            <marker date="1614525958697" expanded="true" signature="3346:3347" ph="..." />
+            <marker date="1614525958697" expanded="true" signature="3371:3376" ph="..." />
+            <marker date="1614525958697" expanded="true" signature="3750:3755" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/plot.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="94">
+        <state relative-caret-position="251">
           <caret line="17" column="39" selection-start-line="17" selection-start-column="39" selection-end-line="17" selection-end-column="48" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
@@ -597,58 +606,33 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trace_file_parser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2113">
-          <caret line="121" column="71" selection-start-line="121" selection-start-column="71" selection-end-line="121" selection-end-column="71" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/sample.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mongodb.json">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/train_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="586">
-          <caret line="260" column="26" selection-start-line="260" selection-start-column="26" selection-end-line="260" selection-end-column="26" />
+        <state relative-caret-position="89">
+          <caret line="285" column="80" selection-start-line="285" selection-start-column="80" selection-end-line="285" selection-end-column="80" />
           <folding>
             <element signature="e#79#109#0" expanded="true" />
-            <marker date="1614523207241" expanded="true" signature="7515:8269" ph="..." />
-            <marker date="1614523207241" expanded="true" signature="11735:11741" ph="..." />
-            <marker date="1614523207241" expanded="true" signature="11736:11737" ph="..." />
+            <marker date="1614529739847" expanded="true" signature="7759:8513" ph="..." />
+            <marker date="1614529739847" expanded="true" signature="13479:13485" ph="..." />
+            <marker date="1614529739847" expanded="true" signature="13480:13481" ph="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_linear_TFIDF.txt">
+    <entry file="file://$PROJECT_DIR$/data_formation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_linear_TFIDF_svd.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="5" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/couchdb_ocsvm_rbf_TFIDF.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="19" selection-start-line="5" selection-start-column="19" selection-end-line="5" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/oc_svm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2561">
-          <caret line="29" selection-start-line="29" selection-end-line="29" />
+        <state relative-caret-position="-58">
+          <caret line="73" column="12" lean-forward="true" selection-start-line="73" selection-start-column="14" selection-end-line="73" selection-end-column="34" />
           <folding>
-            <element signature="e#1#36#0" expanded="true" />
-            <marker date="1614088240794" expanded="true" signature="2914:2916" ph="..." />
-            <marker date="1614088240794" expanded="true" signature="3344:3347" ph="..." />
-            <marker date="1614088240794" expanded="true" signature="3346:3347" ph="..." />
-            <marker date="1614088240794" expanded="true" signature="3371:3376" ph="..." />
-            <marker date="1614088240794" expanded="true" signature="3750:3755" ph="..." />
+            <element signature="e#0#18#0" expanded="true" />
+            <marker date="1614528989641" expanded="true" signature="2988:3355" ph="..." />
+            <marker date="1614528989641" expanded="true" signature="3354:3355" ph="..." />
           </folding>
         </state>
       </provider>

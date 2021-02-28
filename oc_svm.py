@@ -176,10 +176,7 @@ def parameter_search(data_list_normal, data_list_attack, kernel, nu_list, dr_fla
     nu_performance_dict = {}
     for nu in nu_list:
         FPR, TPR, std_FPR, std_TPR = K_fold(data_list_normal, data_list_attack, kernel, nu, dr_flag, dr_dimension)
-
-        print(nu, FPR, TPR, std_FPR, std_TPR)
         nu_performance_dict[nu] = (FPR, TPR, std_FPR, std_TPR)
-
     return nu_performance_dict
 
 

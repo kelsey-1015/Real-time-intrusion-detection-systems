@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
 # couchdb_ocsvm_linear_TF.txt
 tpr_list2 = [1, 1, 1, 1, 1, 1, 1, 1]
@@ -58,6 +59,27 @@ def plot(data_dict, color_list):
     plt.show()
 
 
+def read_data():
+    with open("sample.json", "r") as read_file:
+        dict = json.load(read_file)
+    return dict
+
+def data_process(dict):
+    nu = str(0.01)
+    dict_reform = {}
+    for k, v in dict.items():
+        tpr_list = []
+        fpr_list = []
+        for k1, v1 in v.items():
+            # print(k, k1, v1[nu])
+            fpr = v1[nu][0]
+            tpr = v1[nu][1]
+            fpr_list.append(fpr)
+            tpr_list.append(tpr)
+        print(fpr_list, tpr_list)
+        dict_reform[k]=[tpr_list, fpr_list]
+    print(dict_reform)
+
 def main():
     # label_list = ['rbf_TF', 'rbf_TFIDF', 'rbf_NGRAM', 'linear_TF', 'linear_TFIDF', 'linear_NGRAM']
     # data_list = {'linear_TF': [tpr_list2, fpr_list2], 'rbf_TF': [tpr_list3, fpr_list3],
@@ -73,8 +95,10 @@ def main():
                  'linear_TFIDF_svd': [tpr_list4, fpr_list4], 'rbf_TFIDF_svd': [tpr_list6, fpr_list6],
                  'linear_NGRAM_svd': [tpr_list8, fpr_list8], 'rbf_NGRAM_svd': [tpr_list10, fpr_list10]}
     color_list = ['b', 'g', 'r', 'y', 'k', 'deeppink']
-
-    plot(data_list_2, color_list)
+    result_dict = read_data()
+    print(result_dict)
+    data_process(result_dict)
+    # plot(data_list_2, color_list)
 
 if __name__ == "__main__":
 
