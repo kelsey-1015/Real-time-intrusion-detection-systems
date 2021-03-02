@@ -8,28 +8,12 @@ import sys
 from os import path
 import time
 import argparse
+from constants import *
 
 
 FEATURE_VECTOR = {'TF': 0, "TFIDF": 1, "N_GRAM": 2}
 INFORMATION_STRING_1 = "# nu, FPR, TPR, std_FPR, std_TPR"
 INFORMATION_STRING_2 = "# nu, FPR, TPR"
-# RAWTRACE_FILE = {'couchdb': {'normal': 'raw_tracefile/couchdb_v1_6_normal', 'attack': 'raw_tracefile/couchdb_attack_ace'},
-#                  'mongodb': {'normal': 'raw_tracefile/mongodb_normal', 'attack': 'raw_tracefile/mongodb_brute_force_2'},
-#                  'ml': ('raw_tracefile/ml1_normal', 'raw_tracefile/ml2_normal', 'raw_tracefile/ml3_normal',
-#                        'raw_tracefile/ml4_normal', 'raw_tracefile/ml7_normal')}
-
-# update with mix_attacks
-RAWTRACE_FILE = {'couchdb': {'normal': ('raw_tracefile/couchdb_normal_1', 'raw_tracefile/couchdb_v1_6_normal'),
-                             'attack': 'raw_tracefile/couchdb_attack_mix'},
-                 'mongodb': {'normal': 'raw_tracefile/mongodb_normal', 'attack': 'raw_tracefile/mongodb_brute_force_2'},
-                 'ml': ('raw_tracefile/ml1_normal', 'raw_tracefile/ml2_normal', 'raw_tracefile/ml3_normal',
-                       'raw_tracefile/ml4_normal', 'raw_tracefile/ml7_normal')}
-
-FEATURE_DICT_FILE = {'TF': "FEATURE_DICT.json", "TFIDF": "FEATURE_DICT.json",
-                     "N_GRAM": {'couchdb': 'COUCHDB_FEATURE_DICT_NGRAM.json',
-                                'mongodb':'MONGODB_FEATURE_DICT_NGRAM.json'}}
-
-
 
 
 def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_length, filter_flag):
@@ -202,37 +186,13 @@ def multiple_to_one_cross_validation(filename, rawtrace_list, feature_dict_file,
         print("The result file already exists")
 
 
-
-# def train_model(filename, app_name, feature_dict_file, segment_length_list, filter_flag,
-#                 oc_svm_kernel, feature_extraction, dr_flag, dr_dimension):
-#     """Trace a model with global variable as inputs, currently used for oc-svm, this function applies 10-fold
-#     cross validation"""
-#     rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
-#     rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
-#     if_exit = path.exists(filename)
-#     if not if_exit:
-#         sys.stdout = open(filename, "w")
-#         print(INFORMATION_STRING_1)
-#         feature_extraction_index = FEATURE_VECTOR[feature_extraction]
-#         for segment_length in segment_length_list:
-#             training_set = dataset_concatenate(rawtrace_file_normal, feature_extraction_index, feature_dict_file,
-#                                                segment_length, filter_flag)
-#             testing_set = extract_feature_vector(rawtrace_file_attack, feature_dict_file, feature_extraction_index,
-#                                              segment_length, filter_flag)
-#             print("Segment Length is: ", segment_length)
-#             nu_performance_dict = oc.parameter_search(training_set, testing_set, oc_svm_kernel, oc.nu_list, dr_flag, dr_dimension)
-#         sys.stdout.close()
-#         time.sleep(10)
-#     else:
-#         print("The result file already exists")
-
-
 def train_model(filename, app_name, feature_dict_file, segment_length_list, filter_flag,
                 oc_svm_kernel, feature_extraction, dr_flag, dr_dimension):
     """Trace a model with global variable as inputs, currently used for oc-svm, this function applies 10-fold
     cross validation, change output methods to json"""
     rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
-    rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
+    """TODO: DEALWITH THE BUG IF THERE ARE TWO ATTACK FILES"""
+    rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack'][1]
 
     feature_extraction_index = FEATURE_VECTOR[feature_extraction]
     # dict with format {segment_length: {nu: (tpr, fpr, tpr_std, fpr_std}
@@ -275,24 +235,17 @@ def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimensi
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--appname', type=str, default='couchdb', help='input the application name')
+    parser.add_argument('--appname', type=str, default='ml0', help='input the application name')
     parser.add_argument('--dimension', type=int, default=15, help='input the dimension for trunctedSVD')
     args = parser.parse_args()
     app_name = args.appname
     dr_dimension = args.dimension
 
-    filter_flag = False
-
-    segment_length_list = [2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+    segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
     dr_flag_list = [True, False]
     fv_list = ['TF', 'TFIDF', 'N_GRAM']
     kernel_list = ["linear", "rbf"]
-
-    # segment_length_list = [20000, 50000]
-    # dr_flag_list = [False]
-    # fv_list = ['TF']
-    # kernel_list = ["linear", "rbf"]
-    # filter_flag = False
+    filter_flag = False
 
     algorithm_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
                                            fv_list, kernel_list)

@@ -22,10 +22,10 @@ dataset_file_list_ml_tf = ['ML_algorithm/ml_1_normal_tf.csv', 'ML_algorithm/ml_2
                            "ML_algorithm/ml_7_normal_tf.csv"]
 
 
-# nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
+nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
 # nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1]
 # FOR TEST
-nu_list = [0.01]
+# nu_list = [0.01]
 gamma_list = ['auto', 'scale']
 
 
@@ -177,6 +177,7 @@ def parameter_search(data_list_normal, data_list_attack, kernel, nu_list, dr_fla
     for nu in nu_list:
         FPR, TPR, std_FPR, std_TPR = K_fold(data_list_normal, data_list_attack, kernel, nu, dr_flag, dr_dimension)
         nu_performance_dict[nu] = (FPR, TPR, std_FPR, std_TPR)
+        print(nu, TPR, FPR)
     return nu_performance_dict
 
 

@@ -186,7 +186,6 @@ def parse_trace_tmp(filename, feature_dict, num_separate, filter_flag):
     occurrence_list = [0]*len(feature_dict.values())
     # total number of traces, for tf-idf
     N = 0
-
     # skip this trace if it is empty
     if os.stat(filename).st_size == 0:
         raise ValueError("The input file %s is empty!" % filename)
@@ -270,18 +269,29 @@ def feature_vector_csv_generator(feature_vector_list, csv_filename):
             writer = csv.writer(f)
             writer.writerows(feature_vector_list)
 
-
-def main():
-    rawtrace_file_normal = RAWTRACE_FILE['mongodb_normal']
-    rawtrace_file_attack_0 = RAWTRACE_FILE['mongodb_attack'][0]
-    rawtrace_file_attack_1 = RAWTRACE_FILE['mongodb_attack'][1]
-
+def generate_ngram_dict_json(rawtracefile_list, json_filename):
+    """Generate the json file for n_gram feature vectors as a json file
+     INPUT --> a list of raw tracefiles name
+     OUTPUT --> a json file"""
     distinct_ngram_list = []
-    for filename in [rawtrace_file_attack_0, rawtrace_file_attack_1, rawtrace_file_normal]:
+    for filename in rawtracefile_list:
         ngram_list, ngram_dict = n_gram_dict(filename, distinct_ngram_list)
         distinct_ngram_list = ngram_list
     print(len(list(ngram_dict.keys())))
-    json.dump(ngram_dict, open("MONGODB_FEATURE_DICT_NGRAM.json", 'w'))
+    json.dump(ngram_dict, open(json_filename, 'w'))
+
+
+def main():
+    app_name = 'ml0'
+    rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
+    rawtrace_file_attack_0 = RAWTRACE_FILE[app_name]['attack'][0]
+    rawtrace_file_attack_1 = RAWTRACE_FILE[app_name]['attack'][1]
+
+    rawtracefile_list = [rawtrace_file_attack_0, rawtrace_file_attack_1, rawtrace_file_normal]
+    json_filename = "ML0_FEATURE_DICT_NGRAM.json"
+
+    generate_ngram_dict_json(rawtracefile_list, json_filename)
+
 
 
 
