@@ -23,9 +23,9 @@ def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_len
         dataset = extract_feature_vector(rawtrace_file_list, feature_dict_file, Flag, segment_length, filter_flag)
         return dataset
     else:
-        print(rawtrace_file_list)
+        # print(rawtrace_file_list)
         feature_dict = json.load(open(feature_dict_file))
-        col_num = len(feature_dict)
+        col_num = len(feature_dict)+1
         dataset_total = np.empty((0, col_num))
         for rawtrace_file in rawtrace_file_list:
             dataset = extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag)
@@ -80,8 +80,6 @@ def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_lengt
         feature_vector_list = tp.df_idf(feature_vector_list, occurrence_dict, N)
 
     if Flag == 2:
-        "TODO: check the code"
-
         feature_vector_list = tp.parse_trace_ngram(rawtrace_file, feature_dict, segment_length, filter_flag)
         feature_vector_list = tp.normalization(feature_vector_list)
 
@@ -190,18 +188,24 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
                 oc_svm_kernel, feature_extraction, dr_flag, dr_dimension):
     """Trace a model with global variable as inputs, currently used for oc-svm, this function applies 10-fold
     cross validation, change output methods to json"""
+
     rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
-    """TODO: DEALWITH THE BUG IF THERE ARE TWO ATTACK FILES"""
-    rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack'][1]
+    if app_name == "ml0":
+        rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack'][0]
+    else:
+        rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
+
 
     feature_extraction_index = FEATURE_VECTOR[feature_extraction]
     # dict with format {segment_length: {nu: (tpr, fpr, tpr_std, fpr_std}
     segment_dict = {}
+
     for segment_length in segment_length_list:
         training_set = dataset_concatenate(rawtrace_file_normal, feature_extraction_index, feature_dict_file,
                                                segment_length, filter_flag)
         testing_set = extract_feature_vector(rawtrace_file_attack, feature_dict_file, feature_extraction_index,
                                              segment_length, filter_flag)
+
         nu_performance_dict = oc.parameter_search(training_set, testing_set, oc_svm_kernel, oc.nu_list, dr_flag,
                                                       dr_dimension)
         segment_dict[segment_length] = nu_performance_dict
@@ -223,8 +227,8 @@ def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimensi
                     feature_dict_file = FEATURE_DICT_FILE[fv][app_name]
                 else:
                     feature_dict_file = FEATURE_DICT_FILE[fv]
-                segment_dict = train_model(labelname, app_name, feature_dict_file, segment_length_list, filter_flag, kernel,
-                                           fv, dr_flag, dr_dimension)
+                segment_dict = train_model(labelname, app_name, feature_dict_file, segment_length_list, filter_flag,
+                                           kernel, fv, dr_flag, dr_dimension)
 
                 algorithm_dict[labelname] = segment_dict
 
@@ -235,22 +239,22 @@ def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimensi
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--appname', type=str, default='ml0', help='input the application name')
+    parser.add_argument('--appname', type=str, default='mongodb', help='input the application name')
     parser.add_argument('--dimension', type=int, default=15, help='input the dimension for trunctedSVD')
     args = parser.parse_args()
     app_name = args.appname
     dr_dimension = args.dimension
 
-    segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+    segment_length_list = [20000, 50000]
     dr_flag_list = [True, False]
     fv_list = ['TF', 'TFIDF', 'N_GRAM']
-    kernel_list = ["linear", "rbf"]
+    kernel_list = ["linear"]
     filter_flag = False
 
     algorithm_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
                                            fv_list, kernel_list)
 
-    json_filename = app_name+".json"
+    json_filename = "test_1.json"
 
     with open(json_filename, "w") as outfile:
         json.dump(algorithm_dict, outfile)

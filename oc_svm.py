@@ -22,10 +22,10 @@ dataset_file_list_ml_tf = ['ML_algorithm/ml_1_normal_tf.csv', 'ML_algorithm/ml_2
                            "ML_algorithm/ml_7_normal_tf.csv"]
 
 
-nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
+# nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
 # nu_list = [0.001, 0.005, 0.007, 0.01, 0.05, 0.1]
 # FOR TEST
-# nu_list = [0.01]
+nu_list = [0.01]
 gamma_list = ['auto', 'scale']
 
 
@@ -66,7 +66,6 @@ def oc_svm_threshold(training_set, testing_set_normal, testing_set_attack, thres
     return FP_rate, TP_rate
 
 
-
 def weighted_by_frequency(feature_vector_list):
     feature_vector_list_n = []
     for feature_vector in feature_vector_list:
@@ -89,9 +88,29 @@ def read_data(csv_file):
     return dataset_list
 
 
+def separate_ss(input_list):
+    """The input is a nested list, the function removes last element of each inner list; used for segment the segment
+    sequence and the original feature vector
+    """
+    fv_list = []
+    sequence_list = []
+    for fv in input_list:
+        fv_r = fv[:-1]
+        segment_sequence = fv[-1]
+        fv_list.append(fv_r)
+        sequence_list.append(segment_sequence)
+    return fv_list, sequence_list
+
+
 def oc_svm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.001, gamma_para='scale'):
     """ This function train an oc-svm classifier and compute FPR and TPR with default threshold
     INPUT: training_set, testing_set_normal, testing_set_attack are nested list of feature vectors"""
+
+    # separate the original feature vector and sequences
+    training_set, training_ss = separate_ss(training_set)
+    testing_set_normal, testing_ss_normal = separate_ss(testing_set_normal)
+    testing_set_attack, testing_ss_attack = separate_ss(testing_set_attack)
+
     clf = OneClassSVM(nu=nu_para, kernel=kernel, gamma=gamma_para)
     clf.fit(training_set)
 
@@ -99,6 +118,7 @@ def oc_svm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para
         y_pred_test_normal = clf.predict(testing_set_normal)
         # we expect output 1, so if it predicts a normal sampla as -1, it's an error
         n_error_test_normal = y_pred_test_normal[y_pred_test_normal == -1].size
+        """TODO: Gather the information of segment sequences"""
         FP_rate = n_error_test_normal / len(testing_set_normal)
 
     else:
@@ -116,7 +136,12 @@ def oc_svm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para
 
 def pca_ocsvm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.01, dimension=407, gamma_para='scale'):
     """Fit the PCA with training data, using the resulting vectors to testing data"""
-    # print(training_set.shape)
+
+    # separate the original feature vector and sequences
+    training_set, training_ss = separate_ss(training_set)
+    testing_set_normal, testing_ss_normal = separate_ss(testing_set_normal)
+    testing_set_attack, testing_ss_attack = separate_ss(testing_set_attack)
+
     pca = PCA(n_components=dimension)
     pca.fit(training_set)
     training_set_pca = pca.transform(training_set)
@@ -130,6 +155,10 @@ def pca_ocsvm(training_set, testing_set_normal, testing_set_attack, kernel, nu_p
 
 def truckedsvd_ocsvm(training_set, testing_set_normal, testing_set_attack, kernel, nu_para=0.01, dimension=20, gamma_para='scale'):
     """Fit the PCA with training data, using the resulting vectors to testing data"""
+    training_set, training_ss = separate_ss(training_set)
+    testing_set_normal, testing_ss_normal = separate_ss(testing_set_normal)
+    testing_set_attack, testing_ss_attack = separate_ss(testing_set_attack)
+
     svd = TruncatedSVD(n_components=dimension)
     svd.fit(training_set)
     training_set_pca = svd.transform(training_set)
@@ -137,8 +166,6 @@ def truckedsvd_ocsvm(training_set, testing_set_normal, testing_set_attack, kerne
     testing_set_attack_svd = svd.transform(testing_set_attack)
     FPR, TPR = oc_svm(training_set_pca, testing_set_normal_svd, testing_set_attack_svd, kernel, nu_para, gamma_para)
     return FPR, TPR
-
-
 
 
 def K_fold(dataset_list_normal, dataset_list_attack, kernel, nu, dr_flag, dr_dimension, K=10):
@@ -149,6 +176,7 @@ def K_fold(dataset_list_normal, dataset_list_attack, kernel, nu, dr_flag, dr_dim
         raise ValueError("The input training data is empty!")
     FPR_list = []
     TPR_list = []
+
     for train_index, test_index in kf.split(dataset_list_normal):
         train_set, test_set_normal = dataset_list_normal[train_index], dataset_list_normal[test_index]
         if dr_flag:

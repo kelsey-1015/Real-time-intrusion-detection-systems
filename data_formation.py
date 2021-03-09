@@ -42,20 +42,22 @@ fpr_list8 = [0.015917, 0.017331, 0.020509, 0.023395, 0.027241, 0.034222, 0.02762
 tpr_list10 = [0.95, 1, 1, 1, 1, 1, 1, 1]
 fpr_list10 = [0.01367, 0.019765, 0.031721, 0.035804, 0.034019, 0.046356, 0.0522591, 0.068353]
 
-segment_length_list = [2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
 
-def plot(data_dict, color_list):
+
+def plot(data_dict, color_list, line_style_list, segment_length_list):
     plt.figure()
     index = 0
     for key, list in data_dict.items():
         color_s = color_list[index]
-        plt.plot(segment_length_list, list[0], marker='o', label="TPR_"+key, color=color_s)
-        plt.plot(segment_length_list, list[1], marker='x', label="FPR_"+key, color=color_s)
+        ls_s = line_style_list[index]
+        plt.plot(segment_length_list, list[0], marker='o', label="TPR_"+key, color=color_s, linestyle=ls_s, linewidth=2)
+        plt.plot(segment_length_list, list[1], marker='x', label="FPR_"+key, color=color_s, linestyle=ls_s, linewidth=2)
         index += 1
     plt.legend(prop={'size': 10})
     plt.xlabel("Segment Length (# system call)")
     plt.grid()
-    plt.title("oc-svm + truncked svd with different feature vectors for couchdb")
+    plt.title("oc-svm + truncated SVD with different feature vectors for COUCHDB")
+    # plt.title("oc-svm with different feature vectors for COUCHDB")
     plt.show()
 
 
@@ -95,10 +97,12 @@ def main():
                  'linear_TFIDF_svd': [tpr_list4, fpr_list4], 'rbf_TFIDF_svd': [tpr_list6, fpr_list6],
                  'linear_NGRAM_svd': [tpr_list8, fpr_list8], 'rbf_NGRAM_svd': [tpr_list10, fpr_list10]}
     color_list = ['b', 'g', 'r', 'y', 'k', 'deeppink']
-    result_dict = read_data()
-    print(result_dict)
-    data_process(result_dict)
-    # plot(data_list_2, color_list)
+    segment_length_list = [2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+    line_style_list = ['-', '--', '-', '-', '-.', ':']
+
+    # result_dict = read_data()
+    # data_process(result_dict)
+    plot(data_list_2, color_list, line_style_list, segment_length_list)
 
 if __name__ == "__main__":
 
