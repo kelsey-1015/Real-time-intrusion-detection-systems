@@ -12,3 +12,24 @@ FEATURE_DICT_FILE = {'TF': "feature_vector_json/FEATURE_DICT.json", "TFIDF": "fe
                                 'mongodb': 'feature_vector_json/MONGODB_FEATURE_DICT_NGRAM.json',
                                  'ml0': 'feature_vector_json/ML0_FEATURE_DICT_NGRAM.json'}}
 
+
+"""The settings used to generate mongodb_benchmark"""
+# segment_length_list = [20000, 50000]
+# dr_flag_list = [True, False]
+# fv_list = ['TF', 'TFIDF', 'N_GRAM']
+# kernel_list = ["linear"]
+# filter_flag = False
+
+"""The settings for normal test"""
+# segment_length_list = [50000]
+# dr_flag_list = [True, False]
+# fv_list = ['TF']
+# kernel_list = ["linear"]
+# filter_flag = False
+
+"""The full settings"""
+# segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+# dr_flag_list = [True, False]
+# fv_list = ['TF', 'TFIDF', 'N_GRAM']
+# kernel_list = ["linear", "rbf"]
+# filter_flag = False

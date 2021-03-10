@@ -206,8 +206,8 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
         testing_set = extract_feature_vector(rawtrace_file_attack, feature_dict_file, feature_extraction_index,
                                              segment_length, filter_flag)
 
-        nu_performance_dict = oc.parameter_search(training_set, testing_set, oc_svm_kernel, oc.nu_list, dr_flag,
-                                                      dr_dimension)
+        nu_performance_dict = oc.parameter_search(training_set, testing_set, oc_svm_kernel, oc.nu_list,
+                                                                  dr_flag, dr_dimension)
         segment_dict[segment_length] = nu_performance_dict
 
     return segment_dict
@@ -245,16 +245,23 @@ def main():
     app_name = args.appname
     dr_dimension = args.dimension
 
-    segment_length_list = [20000, 50000]
-    dr_flag_list = [True, False]
+
+    # segment_length_list = [50000]
+    # dr_flag_list = [True, False]
+    # fv_list = ['TF']
+    # kernel_list = ["linear"]
+    # filter_flag = False
+
+    segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+    dr_flag_list = [True]
     fv_list = ['TF', 'TFIDF', 'N_GRAM']
-    kernel_list = ["linear"]
+    kernel_list = ["linear", "rbf"]
     filter_flag = False
 
     algorithm_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
                                            fv_list, kernel_list)
 
-    json_filename = "test_1.json"
+    json_filename = app_name + "_fpr_ss.json"
 
     with open(json_filename, "w") as outfile:
         json.dump(algorithm_dict, outfile)
