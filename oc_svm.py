@@ -7,6 +7,7 @@ from sklearn.model_selection import KFold
 import plot
 from sklearn.decomposition import PCA
 from sklearn.decomposition import TruncatedSVD
+import time
 
 dataset_file_normal = 'couchdb/normal_v1_6_idf.csv'
 dataset_file_attack = 'couchdb/attack_v1_6_idf.csv'
@@ -136,10 +137,8 @@ def oc_svm(training_set, testing_set_normal, testing_set_attack, testing_ss_norm
 
     INPUT: training_set, testing_set_normal, testing_set_attack are nested list of feature vectors
     dr: whether this function is applied after dimension reduction or not, the default value is not."""
-
     clf = OneClassSVM(nu=nu_para, kernel=kernel, gamma=gamma_para)
     clf.fit(training_set)
-
     if len(testing_set_normal) != 0:
         y_pred_test_normal = clf.predict(testing_set_normal)
         # it predicts a normal sampla as -1, it's a false positive
@@ -162,6 +161,9 @@ def oc_svm(training_set, testing_set_normal, testing_set_attack, testing_ss_norm
 
     else:
         TP_rate = -999
+
+
+
     return FP_rate, TP_rate, ss_fpr
 
 
@@ -170,7 +172,6 @@ def truckedsvd_ocsvm(training_set, testing_set_normal, testing_set_attack, testi
     """This function applies truncated svd to the feature vectors of the training data for dimensionality reduction;
     Fit the training data, using the resulting vectors to testing data
     OUTPUT: ss_fpr: The sequence number of traces contribute to the false positives"""
-
 
     svd = TruncatedSVD(n_components=dimension)
     svd.fit(training_set)
@@ -197,8 +198,7 @@ def K_fold(dataset_list_normal, testing_set_attack, kernel, nu, dr_flag, dr_dime
 
     for train_index, test_index in kf.split(dataset_list_normal):
         training_set, testing_set_normal = dataset_list_normal[train_index], dataset_list_normal[test_index]
-        """HINT3: Each row contains 408 elements here and the last element is the sequence number in float"""
-        # print("IN k-FOLD: ", train_set[2][-1])
+
         """Separate the feature vectors and the segment sequences"""
         training_set, training_ss = separate_ss(training_set)
         testing_set_normal, testing_ss_normal = separate_ss(testing_set_normal)
@@ -213,7 +213,6 @@ def K_fold(dataset_list_normal, testing_set_attack, kernel, nu, dr_flag, dr_dime
         FPR_list.append(FPR)
         TPR_list.append(TPR)
         ss_fpr_list = np.concatenate((ss_fpr_list, ss_fpr))
-        # print("K-FOLD: ", ss_fpr_list)
 
     FPR_list = np.array(FPR_list)
     TPR_list = np.array(TPR_list)
@@ -239,7 +238,7 @@ def parameter_search(data_list_normal, data_list_attack, kernel, nu_list, dr_fla
         """As we change the data set array inside the loop, so we use dataset.copy()"""
         FPR, TPR, std_FPR, std_TPR, ss_fpr_list = K_fold(data_list_normal.copy(), data_list_attack.copy(), kernel, nu,
                                              dr_flag, dr_dimension)
-        print("Para Sear: ", type(ss_fpr_list))
+        # print("Para Sear: ", type(ss_fpr_list))
         ss_fpr_list = list(ss_fpr_list)
 
         nu_performance_dict[nu] = [FPR, TPR, std_FPR, std_TPR, ss_fpr_list]

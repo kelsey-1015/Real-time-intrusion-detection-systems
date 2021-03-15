@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import json
 
-def plot(data_dict, color_list, linestyle_list, segment_length_list):
+
+def plot_algorithm(data_dict, color_list, linestyle_list, segment_length_list):
     plt.figure()
     index = 0
     for key, list in data_dict.items():
@@ -22,6 +23,18 @@ def plot(data_dict, color_list, linestyle_list, segment_length_list):
     # plt.title("oc-svm + truncated SVD with different feature vectors for MONGODB")
     plt.show()
 
+
+def plot_fpr_reduction(fpr_original_list, fpr_new_list, segment_length_list):
+    plt.figure()
+    plt.plot(segment_length_list, fpr_original_list, marker='x', label="Original FPR",  linewidth=2)
+    plt.plot(segment_length_list, fpr_new_list, marker='x', label="Reduced FPR", linewidth=2)
+
+    plt.legend(prop={'size': 8}, loc='best')
+    plt.xlabel("Segment Length (# system call)")
+    plt.ylabel("False Positive Rate (FPR)")
+    plt.grid()
+    plt.title("FPR Reduction for linear-TF of MONGODB for interval = 5")
+    plt.show()
 
 def read_data(json_filename):
     with open(json_filename, "r") as read_file:
@@ -75,23 +88,61 @@ def roc_curve(FPR_list, TPR_list):
     plt.title('Receiver operating characteristic example')
     plt.show()
 
+def bar_plot():
+    # labels = ['G1', 'G2', 'G3', 'G4', 'G5']
+    labels = ["Gaussian Kernel", "Linear Kernel"]
+    exe_time_ngram = [417.68, 490.2537]
+    exe_time_tf = [16.85, 17.42]
+
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width / 2, exe_time_ngram, width, label='N_GRAM')
+    rects2 = ax.bar(x + width / 2, exe_time_tf, width, label='TF')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Execution Time (Seconds)')
+    ax.set_title('Execution Time for Mongodb with segment length = 30000')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.grid()
+    ax.legend()
+
+    def autolabel(rects):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+    autolabel(rects1)
+    autolabel(rects2)
+
+    fig.tight_layout()
+
+    plt.show()
 
 def main():
     # segment_length_list = [2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
 
-    json_filename = "json_result/couchdb_mix.json"
-    output_dict = read_data(json_filename)
-    color_list = ['b', 'g', 'r', 'y', 'k', 'deeppink']
-    line_style_list = ['-', '--', '-', '-', '-.', ':']
-
-    for nu in [0.01]:
-        nu = str(nu)
-
-        dict_reform, dict_reform_svd, segment_length_list = data_process(output_dict, nu)
-
-        # print(len(dict_reform.items()))
-        # print(dict_reform)
-        plot(dict_reform_svd, color_list, line_style_list, segment_length_list)
+    # json_filename = "json_result/couchdb_mix.json"
+    # output_dict = read_data(json_filename)
+    # color_list = ['b', 'g', 'r', 'y', 'k', 'deeppink']
+    # line_style_list = ['-', '--', '-', '-', '-.', ':']
+    #
+    # for nu in [0.01]:
+    #     nu = str(nu)
+    #
+    #     dict_reform, dict_reform_svd, segment_length_list = data_process(output_dict, nu)
+    #
+    #     # print(len(dict_reform.items()))
+    #     # print(dict_reform)
+    #     plot(dict_reform_svd, color_list, line_style_list, segment_length_list)
 
     # app_name = 'ml0'
     # rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
@@ -99,6 +150,7 @@ def main():
     # feature_vector_list = tm.extract_feature_vector(rawtrace_file_normal, feature_dict_file, 1, 2000, False)
     # PCA_dimension(feature_vector_list)
 
+    bar_plot()
 
 
 if __name__ == "__main__":

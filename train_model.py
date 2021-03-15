@@ -4,16 +4,9 @@ import trace_file_parser as tp
 import oc_svm as oc
 import json
 import numpy as np
-import sys
-from os import path
 import time
 import argparse
 from constants import *
-
-
-FEATURE_VECTOR = {'TF': 0, "TFIDF": 1, "N_GRAM": 2}
-INFORMATION_STRING_1 = "# nu, FPR, TPR, std_FPR, std_TPR"
-INFORMATION_STRING_2 = "# nu, FPR, TPR"
 
 
 def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_length, filter_flag):
@@ -23,24 +16,13 @@ def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_len
         dataset = extract_feature_vector(rawtrace_file_list, feature_dict_file, Flag, segment_length, filter_flag)
         return dataset
     else:
-        # print(rawtrace_file_list)
         feature_dict = json.load(open(feature_dict_file))
         col_num = len(feature_dict)+1
         dataset_total = np.empty((0, col_num))
         for rawtrace_file in rawtrace_file_list:
             dataset = extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag)
-            # print("dataset: ", dataset.shape)
             dataset_total = np.concatenate((dataset_total, dataset))
-        # print("dataset_total: ", dataset_total.shape)
         return dataset_total
-
-
-def select_with_index(original_list, index_list):
-    """ This function allows getting a list with an index list"""
-    output_list = []
-    for index in index_list:
-        output_list.append(original_list[index])
-    return output_list
 
 
 def result_filename(app_name, cross_label, oc_svm_kernel, feature_extraction, dr_flag):
@@ -88,101 +70,6 @@ def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_lengt
     return feature_vector_list
 
 
-def cross_parameter_search(training_set_rawtrace, test_set_normal_rawtrace, test_set_attack_rawtrace, feature_dict_file,
-                           kernel, flag, nu_list=oc.nu_list):
-    """This fuction performs cross-app validation"""
-    for nu in nu_list:
-        training_set = extract_feature_vector(training_set_rawtrace, feature_dict_file, flag)
-        test_set_normal = extract_feature_vector(test_set_normal_rawtrace, feature_dict_file, flag)
-        if test_set_attack_rawtrace !=[]:
-            test_set_attack = extract_feature_vector(test_set_attack_rawtrace, feature_dict_file, flag)
-        else:
-            test_set_attack = []
-            # print("The attack trace is currently not available!")
-
-        FPR, TPR = oc.oc_svm(training_set, test_set_normal, test_set_attack, kernel, nu)
-        print(nu, FPR, TPR)
-
-
-def cross_parameter_search_multiple(training_set_rawtrace, test_set_normal_rawtrace, test_set_attack_rawtrace,
-                                    feature_dict_file, kernel, flag, nu_list=oc.nu_list):
-    """This fuction performs cross-app validation for mto1, combine with another function later"""
-    for nu in nu_list:
-        training_set = dataset_concatenate(training_set_rawtrace, flag, feature_dict_file)
-        test_set_normal = extract_feature_vector(test_set_normal_rawtrace, feature_dict_file, flag)
-        if test_set_attack_rawtrace !=[]:
-            test_set_attack = extract_feature_vector(test_set_attack_rawtrace, feature_dict_file, flag)
-        else:
-            test_set_attack = []
-            # print("The attack trace is currently not available!")
-
-        FPR, TPR = oc.oc_svm(training_set, test_set_normal, test_set_attack, kernel, nu)
-        print(nu, FPR, TPR)
-
-
-def one_to_one_cross_validation(filename, training_set_rawtrace_list, test_set_normal_rawtrace_list,
-                                kernel, feature_extraction):
-    """Cross validate the learning algorithm with datas from different apps, current no attack trace for ML"""
-    feature_extraction_index = FEATURE_VECTOR[feature_extraction]
-    if_exit = path.exists(filename)
-    if not if_exit:
-        sys.stdout = open(filename, "w")
-        print(INFORMATION_STRING_2)
-        for i in range(len(training_set_rawtrace_list)):
-            for j in range(len(test_set_normal_rawtrace_list)):
-                if i == j:
-                    continue
-                else:
-                    training_set_rawtrace = training_set_rawtrace_list[i]
-                    test_set_normal_rawtrace = test_set_normal_rawtrace_list[j]
-                    print(training_set_rawtrace, test_set_normal_rawtrace)
-                    cross_parameter_search(training_set_rawtrace, test_set_normal_rawtrace, [], kernel, feature_extraction_index)
-        sys.stdout.close()
-        time.sleep(1)
-    else:
-        print("The result file already exists")
-
-
-def one_to_one_cv_loop(app_name):
-    """ Generate results for all combinations of TF, TF-IDF, gaussian, linear"""
-    for fv in ["N_GRAM"]:
-        for kernel in ["linear", "rbf"]:
-            filename = result_filename(app_name, '1to1', kernel, fv)
-            one_to_one_cross_validation(filename, RAWTRACE_FILE[app_name], RAWTRACE_FILE[app_name], kernel, fv)
-
-
-def multiple_to_one_cv_loop(app_name, feature_dict_file):
-    """ Generate results for all combinations of TF, TF-IDF, gaussian, linear"""
-    for fv in ["TF"]:
-        for kernel in ["linear"]:
-            filename = result_filename(app_name, 'N21_', kernel, fv)
-            multiple_to_one_cross_validation(filename, RAWTRACE_FILE[app_name], feature_dict_file,
-                                             kernel, fv)
-
-
-def multiple_to_one_cross_validation(filename, rawtrace_list, feature_dict_file, kernel,
-                                     feature_extraction):
-    """This function trains the learning algorihtm with multiple training sets and test on one specific data sets
-    ;similarly the attack part is missing
-    """
-    feature_extraction_index = FEATURE_VECTOR[feature_extraction]
-    if_exit = path.exists(filename)
-    if not if_exit:
-        sys.stdout = open(filename, "w")
-        print(INFORMATION_STRING_2)
-        for i in range(len(rawtrace_list)):
-            index_list = list(range(len(rawtrace_list)))
-            index_list.remove(i)
-            training_set_rawtrace_list = select_with_index(rawtrace_list, index_list)
-            testing_set_rawtrace = rawtrace_list[i]
-            print('Test: ', testing_set_rawtrace, "Train: ", training_set_rawtrace_list)
-            cross_parameter_search_multiple(training_set_rawtrace_list, testing_set_rawtrace, [], feature_dict_file, kernel,
-                                            feature_extraction_index)
-        sys.stdout.close()
-        time.sleep(1)
-    else:
-        print("The result file already exists")
-
 
 def train_model(filename, app_name, feature_dict_file, segment_length_list, filter_flag,
                 oc_svm_kernel, feature_extraction, dr_flag, dr_dimension):
@@ -191,7 +78,7 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
 
     rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
     if app_name == "ml0":
-        rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack'][0]
+        rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack'][1]
     else:
         rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
 
@@ -201,6 +88,7 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
     segment_dict = {}
 
     for segment_length in segment_length_list:
+
         training_set = dataset_concatenate(rawtrace_file_normal, feature_extraction_index, feature_dict_file,
                                                segment_length, filter_flag)
         testing_set = extract_feature_vector(rawtrace_file_attack, feature_dict_file, feature_extraction_index,
@@ -213,57 +101,62 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
     return segment_dict
 
 
-def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list=[True, False],
-                          fv_list=["N_GRAM", "TF", "TFIDF"], kernel_list=["rbf", "linear"]):
+def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
+                          fv_list, kernel_list):
     """ Generate results for all combinations of TF, TF-IDF, gaussian, linear
     INPUT: dr_flag --> whether perform dimension reduction [truncted SVD]
            dr_dimension --> the number of perform dimension"""
     algorithm_dict = {}
+    execution_time_dict ={}
     for fv in fv_list:
         for kernel in kernel_list:
             for dr_flag in dr_flag_list:
                 labelname = result_labelname(kernel, fv, dr_flag)
+                print("labelname: ", labelname)
+                start_time = time.time()
                 if fv == "N_GRAM":
                     feature_dict_file = FEATURE_DICT_FILE[fv][app_name]
                 else:
                     feature_dict_file = FEATURE_DICT_FILE[fv]
                 segment_dict = train_model(labelname, app_name, feature_dict_file, segment_length_list, filter_flag,
                                            kernel, fv, dr_flag, dr_dimension)
-
+                execution_time = time.time() - start_time
+                execution_time_dict[labelname] = execution_time
                 algorithm_dict[labelname] = segment_dict
 
-    return algorithm_dict
+    return algorithm_dict, execution_time_dict
 
 
 
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--appname', type=str, default='mongodb', help='input the application name')
+    parser.add_argument('--appname', type=str, default='couchdb', help='input the application name')
     parser.add_argument('--dimension', type=int, default=15, help='input the dimension for trunctedSVD')
     args = parser.parse_args()
     app_name = args.appname
     dr_dimension = args.dimension
 
-
-    # segment_length_list = [50000]
-    # dr_flag_list = [True, False]
-    # fv_list = ['TF']
-    # kernel_list = ["linear"]
-    # filter_flag = False
-
     segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
-    dr_flag_list = [True]
-    fv_list = ['TF', 'TFIDF', 'N_GRAM']
+    dr_flag_list = [False, True]
+    fv_list = ["N_GRAM"]
     kernel_list = ["linear", "rbf"]
     filter_flag = False
 
-    algorithm_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
-                                           fv_list, kernel_list)
+    algorithm_dict, execution_time_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag,
+    dr_dimension, dr_flag_list, fv_list, kernel_list)
 
-    json_filename = app_name + "_fpr_ss.json"
 
-    with open(json_filename, "w") as outfile:
+    print(algorithm_dict)
+    print(execution_time_dict)
+
+    json_filename_execution = app_name + "_execution_time_NGRAM.json"
+    json_filename_results = app_name + "_fpr_ss_NGRAM.json"
+
+    with open(json_filename_execution, "w") as outfile:
+        json.dump(execution_time_dict, outfile)
+
+    with open(json_filename_results, "w") as outfile:
         json.dump(algorithm_dict, outfile)
 
 

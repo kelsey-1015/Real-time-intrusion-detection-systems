@@ -24,16 +24,6 @@ def merge(dict1, dict2):
     return dict2
 
 
-# def normalization(input_list):
-#     """Change number of occurrence input frequency distribution for a nested list"""
-#     output_list = []
-#     for fv in input_list:
-#         # change str to int
-#         fv = [int(c) for c in fv]
-#         fv_norm = [float(c)/sum(fv) for c in fv]
-#         output_list.append(fv_norm)
-#     return output_list
-
 def normalization(input_list):
     """Change number of occurrence input frequency distribution for a nested list, remove the effect of the last element
     , which is the segment sequence"""
@@ -137,8 +127,12 @@ def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
 def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag):
     """This function changes traces into fix length n-gram feature vectors
     INPUT: filename --> raw tracefiles
-    feature_dict: The fixed length feature vector"""
+    feature_dict: The fixed length feature vector
+    OUTPUT:
+    feature_vector_list: a nested list of feature vectors, the sequence number is appended in the last element of each
+    feature vector; """
     feature_vector_list = []
+    segment_sequence = 0
     fv_index = 0
     # skip this trace if it is empty
     if os.stat(filename).st_size == 0:
@@ -178,89 +172,20 @@ def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag):
 
                 if syscall_index == num_separate:
                     # print('seprate the tracefile')
+                    segment_sequence += 1
                     syscall_index = 0
                     feature_vector = list(feature_dict.values())
+                    feature_vector.append(segment_sequence)
+
                     #  skip if all the elements all zero
-                    all_zero_flag = all([o == 0 for o in feature_vector])
-                    if feature_vector not in feature_vector_list and not all_zero_flag:
+                    all_zero_flag = all([o == 0 for o in feature_vector[:-1]])
+                    if not all_zero_flag:
                         fv_index += 1
                         feature_vector_list.append(feature_vector)
 
                     # reset dict values to zeros
                     feature_dict = dict.fromkeys(feature_dict, 0)
-
     return feature_vector_list
-
-
-def parse_trace_test(filename, feature_dict, num_separate, filter_flag):
-    """This function changes traces into feature vectors. The raw trace is separated with equal length num_separate
-    OUTPUT: occurrence_dict: The no. of occurrences of features [syscall, ngram] in all traces of the database"""
-    # print(feature_dict)
-    feature_vector_list = []
-    # compute the occurrence of syscalls in the total database, currently only on the normal data; used for tf-idf
-    occurrence_list = [0]*len(feature_dict.values())
-    # total number of traces, for tf-idf
-    N = 0
-    # skip this trace if it is empty
-    if os.stat(filename).st_size == 0:
-        raise ValueError("The input file %s is empty!" % filename)
-        return -1
-
-    syscall_index = 0
-    with open(filename) as f:
-        for line in f:
-            if line.strip():  # if the line is not empty
-                syscall_index += 1
-                line_list = line.split()
-                try:
-                    sys_call = line_list[6]
-                except:
-                    raise ValueError
-
-                if filter_flag:
-                    # if the action not belongs to one of the followings
-                    if sys_call not in FILTER_SYSCALL_LIST:
-                        try:
-                            feature_dict[sys_call] += 1
-                        except:
-                            if sys_call not in INVALID_SYSCALL_LIST:
-                                print("Unexpected system call: ", sys_call)
-                            pass
-                else:
-                    try:
-                        feature_dict[sys_call] += 1
-                    except:
-                        pass
-
-                if syscall_index == num_separate:
-                    # print('seprate the tracefile')
-                    N += 1
-                    syscall_index = 0
-                    feature_vector = list(feature_dict.values())
-                    # print("Benchmark:", feature_dict['brk'])
-
-                    # validate if a specific syscall/ngram occurs in the feature vector, used to calculate idf (inverse
-                    # document frequency)_
-                    feature_vector_flag_tmp = [1 if c > 0 else 0 for c in feature_vector]
-                    # element-wise addition of symbol occurrence number in the current trace and the historic data
-                    occurrence_list = [sum(x) for x in zip(feature_vector_flag_tmp, occurrence_list)]
-                    occurrence_dict = dict.fromkeys(feature_dict, 0)
-                    # update the dict
-                    occurrence_dict.update(zip(occurrence_dict, occurrence_list))
-
-                    # compute the feature_vector list for each tracefile (separated with lenghth N), only remain those
-                    # dictinct feature vectors
-                    #  skip if all the elements all zero
-                    all_zero_flag = all([o == 0 for o in feature_vector])
-                    if feature_vector not in feature_vector_list and not all_zero_flag:
-                        feature_vector_list.append(feature_vector)
-
-                    # reset dict values to zeros
-                    feature_dict = dict.fromkeys(feature_dict, 0)
-                    # print("all_zero", feature_dict['brk'])
-
-    # print("END: ", feature_dict['brk'])
-    return feature_vector_list, occurrence_dict, N
 
 
 def parse_trace_tmp(filename, feature_dict, num_separate, filter_flag):
@@ -321,7 +246,6 @@ def parse_trace_tmp(filename, feature_dict, num_separate, filter_flag):
                     occurrence_dict.update(zip(occurrence_dict, occurrence_list))
 
                     # attach the segment sequence into the last element of the feature vector
-                    # print("Modified:", feature_vector)
                     feature_vector.append(segment_sequence)
                     # compute the feature_vector list for each tracefile (separated with lenghth N), only remain those
                     # dictinct feature vectors
