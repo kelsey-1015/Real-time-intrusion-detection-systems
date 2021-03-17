@@ -4,37 +4,66 @@ from sklearn.decomposition import PCA
 import json
 
 
+
 def plot_algorithm(data_dict, color_list, linestyle_list, segment_length_list):
     plt.figure()
     index = 0
     for key, list in data_dict.items():
         color_s = color_list[index]
         ls_s = linestyle_list[index]
-        plt.plot(segment_length_list, list[0], marker='o', label="TPR_"+key, color=color_s, linestyle=ls_s, linewidth=2)
-        plt.plot(segment_length_list, list[1], marker='x', label="FPR_"+key, color=color_s, linestyle=ls_s, linewidth=2)
+        plt.plot(segment_length_list, list[0], marker='o', label="TPR_"+key, color=color_s, linestyle=ls_s,
+                 markersize=10, linewidth=4)
+        plt.plot(segment_length_list, list[1], marker='x', label="FPR_"+key, color=color_s, linestyle=ls_s,
+                 markersize=10, linewidth=4)
         index += 1
-    plt.legend(prop={'size': 8}, loc='best')
-    plt.xlabel("Segment Length (# system call)")
+    plt.legend(prop={'size': 10}, ncol=2, handleheight=2.4, labelspacing=0.1)
+    # plt.legend(prop={'size': 10}, loc=0)
+    plt.xlabel("Segment Length (# system call)", fontsize=20)
+    plt.ylabel("TPR/FPR", fontsize=20)
     plt.grid()
-
-    plt.title("oc-svm + truncated SVD with different feature vectors for COUCHDB (mix normal and attack traffic)")
-    # plt.title("oc-svm with different feature vectors for COUCHDB (mix normal and attack traffic)")
-    # plt.title("oc-svm + truncated SVD with different feature vectors for a ML algorithm")
-    # plt.title("oc-svm + truncated SVD with different feature vectors for MONGODB")
+    # plt.title("TPR and FPR with different segment window size for COUCHDB", fontsize=16)
     plt.show()
 
 
-def plot_fpr_reduction(fpr_original_list, fpr_new_list, segment_length_list):
-    plt.figure()
-    plt.plot(segment_length_list, fpr_original_list, marker='x', label="Original FPR",  linewidth=2)
-    plt.plot(segment_length_list, fpr_new_list, marker='x', label="Reduced FPR", linewidth=2)
+# def plot_fpr_reduction(fpr_original_list, fpr_new_list, segment_length_list):
+#     plt.figure()
+#     plt.plot(segment_length_list, fpr_original_list, marker='x', label="Original FPR",  linewidth=2)
+#     plt.plot(segment_length_list, fpr_new_list, marker='x', label="Reduced FPR", linewidth=2)
+#
+#     plt.legend(prop={'size': 8}, loc='best')
+#     plt.xlabel("Segment Length (# system call)")
+#     plt.ylabel("False Positive Rate (FPR)")
+#     plt.grid()
+#     plt.title("FPR Reduction for linear-TF of MONGODB for interval = 5")
+#     plt.show()
 
-    plt.legend(prop={'size': 8}, loc='best')
-    plt.xlabel("Segment Length (# system call)")
-    plt.ylabel("False Positive Rate (FPR)")
-    plt.grid()
-    plt.title("FPR Reduction for linear-TF of MONGODB for interval = 5")
+
+def plot_fpr_reduction(fpr_original_list_1, fpr_new_list_1,
+                       fpr_original_list_2, fpr_new_list_2,segment_length_list):
+
+    fig, axs = plt.subplots(2)
+    # fig.suptitle('Vertically stacked subplots')
+
+    axs[0].plot(segment_length_list, fpr_original_list_1, marker='x', color='red', label="Original FPR for TF",  linewidth=2)
+    axs[0].plot(segment_length_list, fpr_new_list_1, marker='x', color='blue', label="Reduced FPR for TF", linewidth=2)
+    axs[1].plot(segment_length_list, fpr_original_list_2, marker='x', color='red', label="Original FPR for NGRAM", linewidth=2)
+    axs[1].plot(segment_length_list, fpr_new_list_2, marker='x', color='blue', label="Reduced FPR for NGRAM", linewidth=2)
+
+    axs[0].legend(prop={'size': 8}, loc='best')
+    axs[1].legend(prop={'size': 8}, loc='best')
+    axs[0].set_xlabel("Segment Length (# system call)")
+    axs[1].set_xlabel("Segment Length (# system call)")
+    axs[0].set_ylabel("False Positive Rate (FPR)")
+    # axs[1].set_ylabel("False Positive Rate (FPR)")
+    axs[0].set_ylim([-0.005, 0.035])
+    axs[1].set_ylim([-0.005, 0.035])
+    axs[0].grid()
+    axs[1].grid()
+
+
+    # plt.title("FPR Reduction for linear-TF of MONGODB for interval = 5")
     plt.show()
+
 
 def read_data(json_filename):
     with open(json_filename, "r") as read_file:
@@ -88,27 +117,34 @@ def roc_curve(FPR_list, TPR_list):
     plt.title('Receiver operating characteristic example')
     plt.show()
 
+
+
 def bar_plot():
     # labels = ['G1', 'G2', 'G3', 'G4', 'G5']
-    labels = ["Gaussian Kernel", "Linear Kernel"]
-    exe_time_ngram = [417.68, 490.2537]
-    exe_time_tf = [16.85, 17.42]
+    labels = ['MongoDB', 'CouchDB', "Image Classification"]
+    # labels = ["Gaussian Kernel", "Linear Kernel"]
+    exe_time_ngram_linear = [490.3, 330.1, 15.8]
+    exe_time_ngram_rbf = [417.7, 327.0, 15.7]
+    exe_time_tf_linear = [17.4, 74.9, 8.2]
+    exe_time_tf_rbf = [16.9, 71.3, 8.3]
 
 
     x = np.arange(len(labels))  # the label locations
-    width = 0.2  # the width of the bars
+    width = 0.1  # the width of the bars
 
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width / 2, exe_time_ngram, width, label='N_GRAM')
-    rects2 = ax.bar(x + width / 2, exe_time_tf, width, label='TF')
+    rects1 = ax.bar(x - 3*width/2, exe_time_ngram_linear, width, color ='blue', label='N_GRAM_linear')
+    rects2 = ax.bar(x - width/2, exe_time_tf_linear, width, color='red', label='TF_linear')
+    rects3 = ax.bar(x + width/2, exe_time_ngram_rbf, width, color='blue', label='N_GRAM_rbf', hatch="//")
+    rects4 = ax.bar(x + width*3/2, exe_time_tf_rbf, width, color='red', label='TF_rbf', hatch="//")
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Execution Time (Seconds)')
-    ax.set_title('Execution Time for Mongodb with segment length = 30000')
+    ax.set_ylabel('Execution Time (Seconds)', fontsize=20)
+    # ax.set_title('Execution Time for Mongodb with segment length = 30000')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels, fontsize=20)
     ax.grid()
-    ax.legend()
+    ax.legend(fontsize=16)
 
     def autolabel(rects):
         """Attach a text label above each bar in *rects*, displaying its height."""
@@ -122,6 +158,8 @@ def bar_plot():
 
     autolabel(rects1)
     autolabel(rects2)
+    autolabel(rects3)
+    autolabel(rects4)
 
     fig.tight_layout()
 
@@ -134,15 +172,13 @@ def main():
     # output_dict = read_data(json_filename)
     # color_list = ['b', 'g', 'r', 'y', 'k', 'deeppink']
     # line_style_list = ['-', '--', '-', '-', '-.', ':']
-    #
+    # #
     # for nu in [0.01]:
     #     nu = str(nu)
-    #
     #     dict_reform, dict_reform_svd, segment_length_list = data_process(output_dict, nu)
-    #
-    #     # print(len(dict_reform.items()))
-    #     # print(dict_reform)
-    #     plot(dict_reform_svd, color_list, line_style_list, segment_length_list)
+    #     plot_algorithm(dict_reform, color_list, line_style_list, segment_length_list)
+
+
 
     # app_name = 'ml0'
     # rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
@@ -150,7 +186,10 @@ def main():
     # feature_vector_list = tm.extract_feature_vector(rawtrace_file_normal, feature_dict_file, 1, 2000, False)
     # PCA_dimension(feature_vector_list)
 
-    bar_plot()
+
+
+    # bar_plot()
+    plot_fpr_reduction()
 
 
 if __name__ == "__main__":

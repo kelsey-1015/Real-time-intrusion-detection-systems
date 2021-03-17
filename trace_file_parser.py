@@ -7,7 +7,7 @@ from constants import *
 from sklearn.decomposition import PCA
 
 
-NGRAM_LENGTH = 3
+NGRAM_LENGTH = 6
 
 
 # The following syscalls may happen in the raw tracefile, but they are not valid. Not in the Feature vector
@@ -57,14 +57,14 @@ def common_element(a, b):
         return False
 
 
-def generate_n_gram(n_gram, key_action, l=3):
-    """ This function generates n-grams of length l"""
+def generate_n_gram(n_gram, key_action, n_gram_length):
+    """ This function generates n-grams of specific length"""
 
-    if len(n_gram) < l:
+    if len(n_gram) < n_gram_length:
         n_gram.append(key_action)
         return n_gram
 
-    elif len(n_gram) == l:
+    elif len(n_gram) == n_gram_length:
         n_gram = n_gram[1:]
         n_gram.append(key_action)
         return n_gram
@@ -73,7 +73,7 @@ def generate_n_gram(n_gram, key_action, l=3):
         raise ValueError
 
 
-def n_gram_dict(filename, distinct_ngram_list=[]):
+def n_gram_dict(filename, distinct_ngram_list, n_gram_length):
     """ This function extracts or update occurring distinct syscalls in the raw tracefile
     INPUT: filename --> new input"""
     n_gram = []
@@ -89,8 +89,8 @@ def n_gram_dict(filename, distinct_ngram_list=[]):
                 if sys_call in INVALID_SYSCALL_LIST: # skip the line IF the corresponding syscall is invalid
                     continue
 
-                n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
-                if len(n_gram) == NGRAM_LENGTH:
+                n_gram = generate_n_gram(n_gram, sys_call, n_gram_length)
+                if len(n_gram) == n_gram_length:
                     n_gram_s = str(n_gram)
                     if n_gram_s not in distinct_ngram_list:
                         distinct_ngram_list.append(n_gram_s)
@@ -124,7 +124,7 @@ def fixed_length_feature_dict(filename, distinct_syscall_list=[]):
     return feature_dict
 
 
-def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag):
+def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag, n_gram_length):
     """This function changes traces into fix length n-gram feature vectors
     INPUT: filename --> raw tracefiles
     feature_dict: The fixed length feature vector
@@ -153,17 +153,17 @@ def parse_trace_ngram(filename, feature_dict, num_separate, filter_flag):
 
                 if filter_flag:
                     if sys_call not in FILTER_SYSCALL_LIST: # if the action not belongs to one of the followings
-                        n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
-                        if len(n_gram) == NGRAM_LENGTH:
+                        n_gram = generate_n_gram(n_gram, sys_call, n_gram_length)
+                        if len(n_gram) == n_gram_length:
                             n_gram_s = str(n_gram)
                             try:
                                 feature_dict[n_gram_s] += 1
                             except KeyError:  # raise key error if the ngram does not exist
                                 pass
                 else:
-                    n_gram = generate_n_gram(n_gram, sys_call, NGRAM_LENGTH)
+                    n_gram = generate_n_gram(n_gram, sys_call, n_gram_length)
 
-                    if len(n_gram) == NGRAM_LENGTH:
+                    if len(n_gram) == n_gram_length:
                         n_gram_s = str(n_gram)
                         try:
                             feature_dict[n_gram_s] += 1
@@ -212,6 +212,7 @@ def parse_trace_tmp(filename, feature_dict, num_separate, filter_flag):
                 line_list = line.split()
                 try:
                     sys_call = line_list[6]
+                    sys_call_time = line_list[1]
                 except:
                     raise ValueError
 
@@ -285,38 +286,31 @@ def feature_vector_csv_generator(feature_vector_list, csv_filename):
             writer = csv.writer(f)
             writer.writerows(feature_vector_list)
 
-def generate_ngram_dict_json(rawtracefile_list, json_filename):
+
+def generate_ngram_dict_json(rawtracefile_list, json_filename, n_gram_length):
     """Generate the json file for n_gram feature vectors as a json file
      INPUT --> a list of raw tracefiles name
      OUTPUT --> a json file"""
     distinct_ngram_list = []
     for filename in rawtracefile_list:
-        ngram_list, ngram_dict = n_gram_dict(filename, distinct_ngram_list)
+        ngram_list, ngram_dict = n_gram_dict(filename, distinct_ngram_list, n_gram_length)
         distinct_ngram_list = ngram_list
     print(len(list(ngram_dict.keys())))
     json.dump(ngram_dict, open(json_filename, 'w'))
 
 
 def main():
-    app_name = 'couchdb'
-    rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal'][0]
-    # rawtrace_file_attack_0 = RAWTRACE_FILE[app_name]['attack'][0]
-    # rawtrace_file_attack_1 = RAWTRACE_FILE[app_name]['attack'][1]
+    app_name = 'mongodb'
+    rawtrace_file_normal = RAWTRACE_FILE[app_name]['normal']
+    rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
 
-    # rawtracefile_list = [rawtrace_file_attack_0, rawtrace_file_attack_1, rawtrace_file_normal]
-    # json_filename = "ML0_FEATURE_DICT_NGRAM.json"
+    rawtracefile_list = [rawtrace_file_normal, rawtrace_file_attack]
+    n_gram_length = 6
+
+    json_filename = "MONGODB_FEATURE_DICT_NGRAM_6.json"
     #
-    # generate_ngram_dict_json(rawtracefile_list, json_filename)
+    generate_ngram_dict_json(rawtracefile_list, json_filename, n_gram_length)
 
-    feature_dict_file = FEATURE_DICT_FILE['TF']
-    # original
-    feature_dict = json.load(open(feature_dict_file))
-    feature_vector_list, o, N = parse_trace_test(rawtrace_file_normal, feature_dict, 5000, False)
-    print(o, N)
-    # modified
-    feature_dict = json.load(open(feature_dict_file))
-    feature_vector_list_1, o_1, N_1 = parse_trace_test(rawtrace_file_normal, feature_dict, 5000, False)
-    print(o_1, N_1)
 
 
 

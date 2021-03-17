@@ -68,10 +68,17 @@ def main():
     SL_TN_number_mongodb = {1000: 7460, 2000: 3730, 5000: 1490, 10000: 750, 15000: 500, 20000: 370, 25000: 300,
                             30000: 250, 50000: 150}
 
-    json_file = 'fpr_results/mongodb_fpr_ss.json'
-    alglorithm_name = "linear_TF"
-    FPR_original_list, FPR_new_list = parse_loop_sl(json_file, alglorithm_name, segment_length_list, SL_TN_number_mongodb)
-    plot.plot_fpr_reduction(FPR_original_list, FPR_new_list, segment_length_list)
+    json_file_tf = 'fpr_results/mongodb_fpr_ss_tf.json'
+    json_file_ngram = 'fpr_results/mongodb_fpr_ss_NGRAM.json'
+    alglorithm_name_tf = "linear_TF"
+    alglorithm_name_ngram = "linear_N_GRAM"
+
+    FPR_original_list_tf, FPR_new_list_tf = parse_loop_sl(json_file_tf, alglorithm_name_tf, segment_length_list,
+                                                    SL_TN_number_mongodb)
+    FPR_original_list_ngram, FPR_new_list_ngram = parse_loop_sl(json_file_ngram, alglorithm_name_ngram, segment_length_list,
+                                                    SL_TN_number_mongodb)
+    plot.plot_fpr_reduction(FPR_original_list_tf, FPR_new_list_tf, FPR_original_list_ngram, FPR_new_list_ngram,
+                            segment_length_list)
 
 
 if __name__ == "__main__":

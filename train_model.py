@@ -9,18 +9,20 @@ import argparse
 from constants import *
 
 
-def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_length, filter_flag):
+def dataset_concatenate(rawtrace_file_list, Flag, feature_dict_file, segment_length, filter_flag, n_gram_length):
     """This function combines data from multiple lists into an np array, col_num equals to the number of keys in
     the dist"""
     if isinstance(rawtrace_file_list, str): # if the input list is a string, then output directly
-        dataset = extract_feature_vector(rawtrace_file_list, feature_dict_file, Flag, segment_length, filter_flag)
+        dataset = extract_feature_vector(rawtrace_file_list, feature_dict_file, Flag, segment_length, filter_flag,
+                                         n_gram_length)
         return dataset
     else:
         feature_dict = json.load(open(feature_dict_file))
         col_num = len(feature_dict)+1
         dataset_total = np.empty((0, col_num))
         for rawtrace_file in rawtrace_file_list:
-            dataset = extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag)
+            dataset = extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag,
+                                             n_gram_length)
             dataset_total = np.concatenate((dataset_total, dataset))
         return dataset_total
 
@@ -43,7 +45,7 @@ def result_labelname(oc_svm_kernel, feature_extraction, dr_flag):
     return labelname
 
 
-def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag):
+def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_length, filter_flag, n_gram_length):
     """ parse raw trace and extracts feature vectors.,
     INPUT:Flag = 0 for tf, 1 for idf-tf, 2 for n-gram
     --> segment_length: how the raw tracefile is segmented
@@ -53,16 +55,19 @@ def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_lengt
     feature_dict = json.load(open(feature_dict_file))
 
     if Flag == 0:
-        feature_vector_list, occurrence_dict, N = tp.parse_trace_tmp(rawtrace_file, feature_dict, segment_length, filter_flag)
+        feature_vector_list, occurrence_dict, N = tp.parse_trace_tmp(rawtrace_file, feature_dict, segment_length,
+                                                                     filter_flag)
         feature_vector_list = tp.normalization(feature_vector_list)
 
     if Flag == 1:
-        feature_vector_list, occurrence_dict, N = tp.parse_trace_tmp(rawtrace_file, feature_dict, segment_length, filter_flag)
+        feature_vector_list, occurrence_dict, N = tp.parse_trace_tmp(rawtrace_file, feature_dict, segment_length,
+                                                                     filter_flag)
         feature_vector_list = tp.normalization(feature_vector_list)
         feature_vector_list = tp.df_idf(feature_vector_list, occurrence_dict, N)
 
     if Flag == 2:
-        feature_vector_list = tp.parse_trace_ngram(rawtrace_file, feature_dict, segment_length, filter_flag)
+        feature_vector_list = tp.parse_trace_ngram(rawtrace_file, feature_dict, segment_length, filter_flag,
+                                                   n_gram_length)
         feature_vector_list = tp.normalization(feature_vector_list)
 
     # change into a numpy array for consistence
@@ -70,9 +75,8 @@ def extract_feature_vector(rawtrace_file, feature_dict_file, Flag, segment_lengt
     return feature_vector_list
 
 
-
 def train_model(filename, app_name, feature_dict_file, segment_length_list, filter_flag,
-                oc_svm_kernel, feature_extraction, dr_flag, dr_dimension):
+                oc_svm_kernel, feature_extraction, dr_flag, dr_dimension, n_gram_length):
     """Trace a model with global variable as inputs, currently used for oc-svm, this function applies 10-fold
     cross validation, change output methods to json"""
 
@@ -82,7 +86,6 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
     else:
         rawtrace_file_attack = RAWTRACE_FILE[app_name]['attack']
 
-
     feature_extraction_index = FEATURE_VECTOR[feature_extraction]
     # dict with format {segment_length: {nu: (tpr, fpr, tpr_std, fpr_std}
     segment_dict = {}
@@ -90,9 +93,9 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
     for segment_length in segment_length_list:
 
         training_set = dataset_concatenate(rawtrace_file_normal, feature_extraction_index, feature_dict_file,
-                                               segment_length, filter_flag)
+                                               segment_length, filter_flag, n_gram_length)
         testing_set = extract_feature_vector(rawtrace_file_attack, feature_dict_file, feature_extraction_index,
-                                             segment_length, filter_flag)
+                                             segment_length, filter_flag, n_gram_length)
 
         nu_performance_dict = oc.parameter_search(training_set, testing_set, oc_svm_kernel, oc.nu_list,
                                                                   dr_flag, dr_dimension)
@@ -102,7 +105,7 @@ def train_model(filename, app_name, feature_dict_file, segment_length_list, filt
 
 
 def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimension, dr_flag_list,
-                          fv_list, kernel_list):
+                          fv_list, kernel_list, n_gram_length):
     """ Generate results for all combinations of TF, TF-IDF, gaussian, linear
     INPUT: dr_flag --> whether perform dimension reduction [truncted SVD]
            dr_dimension --> the number of perform dimension"""
@@ -119,7 +122,7 @@ def train_model_fv_kernel(app_name, segment_length_list, filter_flag, dr_dimensi
                 else:
                     feature_dict_file = FEATURE_DICT_FILE[fv]
                 segment_dict = train_model(labelname, app_name, feature_dict_file, segment_length_list, filter_flag,
-                                           kernel, fv, dr_flag, dr_dimension)
+                                           kernel, fv, dr_flag, dr_dimension, n_gram_length)
                 execution_time = time.time() - start_time
                 execution_time_dict[labelname] = execution_time
                 algorithm_dict[labelname] = segment_dict
@@ -137,27 +140,41 @@ def main():
     app_name = args.appname
     dr_dimension = args.dimension
 
-    segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
-    dr_flag_list = [False, True]
-    fv_list = ["N_GRAM"]
-    kernel_list = ["linear", "rbf"]
+    n_gram_length = 3
+
+    # segment_length_list = [1000, 2000, 5000, 10000, 15000, 20000, 25000, 30000, 50000]
+    # dr_flag_list = [False, True]
+    # fv_list = ["N_GRAM"]
+    # kernel_list = ["linear", "rbf"]
+    # filter_flag = False
+
+    # segment_length_list = [5000]
+    # dr_flag_list = [False]
+    # fv_list = ["N_GRAM"]
+    # kernel_list = ["linear"]
+    # filter_flag = False
+
+    segment_length_list = [30000]
+    dr_flag_list = [False]
+    fv_list = ['TF', 'N_GRAM']
+    kernel_list = ["linear", 'rbf']
     filter_flag = False
 
     algorithm_dict, execution_time_dict = train_model_fv_kernel(app_name, segment_length_list, filter_flag,
-    dr_dimension, dr_flag_list, fv_list, kernel_list)
+    dr_dimension, dr_flag_list, fv_list, kernel_list, n_gram_length)
 
 
     print(algorithm_dict)
     print(execution_time_dict)
-
-    json_filename_execution = app_name + "_execution_time_NGRAM.json"
-    json_filename_results = app_name + "_fpr_ss_NGRAM.json"
+    #
+    json_filename_execution = app_name + "_execution_time.json"
+    # json_filename_results = app_name + "_fpr_ss_NGRAM.json"
 
     with open(json_filename_execution, "w") as outfile:
         json.dump(execution_time_dict, outfile)
-
-    with open(json_filename_results, "w") as outfile:
-        json.dump(algorithm_dict, outfile)
+    #
+    # with open(json_filename_results, "w") as outfile:
+    #     json.dump(algorithm_dict, outfile)
 
 
 if __name__ == "__main__":

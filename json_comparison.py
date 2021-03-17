@@ -21,6 +21,10 @@ def print_json(json_file):
     for k, v in dict.items():
         print(k)
 
+def print_num_key(json_file):
+    dict = json.load(open(json_file))
+    print("The length of the dict is: ", len(dict.keys()))
+
 
 def extract_json(input_json_file, output_json_file):
     """Load a jsonfile; Extract [k, v] pair with a specific condition; output into a new json file"""
@@ -43,16 +47,12 @@ def combine_json(input_json_file_1, input_json_file_2, output_json_file):
 
 def main():
 
-    key_list = ["rbf_TF", "30000", "0.01"]
-    json_file_1 = 'fpr_results/mongodb_fpr_ss.json'
-    json_file_2 = 'fpr_results/mongodb_fpr_ss_svd.json'
+    # key_list = ["rbf_TF", "30000", "0.01"]
+    json_file_1 = 'MONGODB_FEATURE_DICT_NGRAM_6.json'
+    json_file_2 = 'feature_vector_json/MONGODB_FEATURE_DICT_NGRAM.json'
+    print_num_key(json_file_1)
 
 
-    # extract_json(json_file_2, json_file_2)
-    # combine_json(json_file_1, json_file_2, 'fpr_results/mongodb_fpr_ss_total.json')
-    # print_json('fpr_results/mongodb_fpr_ss_total.json')
-    # print_json_key('fpr_results/mongodb_fpr_ss_total.json', key_list)
-    # print_json_key(json_file_1, key_list)
 
 
 
